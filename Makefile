@@ -3,7 +3,7 @@
 
 BIN    = sttemp
 CC     = cc
-CFLAGS = -W -O
+CFLAGS = -Wall -Werror -O
 
 all: src/main.c src/config.h
 	$(CC) $(CFLAGS) src/main.c -o $(BIN)

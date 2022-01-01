@@ -4,9 +4,37 @@
 #include <string.h>
 #include <fcntl.h>
 
+#define BUF_SIZE 2097152
+
 void show_usage() {
     printf("sttemp - simple template manager\n");
     printf("Usage:\n\tsttemp template_name\n");
+}
+
+char* strconcat(char* first, char* second) {
+    size_t first_len = strlen(first);
+    size_t second_len = strlen(second);
+    char *buf = malloc(first_len + second_len + 1);
+    strncpy(buf, first, first_len);
+    strncpy(buf + first_len, second, second_len + 1);
+    return buf;
+}
+
+char* freadall(FILE* input) {
+    char *buf = malloc(BUF_SIZE);
+    size_t used = 0;
+    size_t len  = 0;
+
+    do {
+        buf = realloc(buf, BUF_SIZE + used);
+        len = fread(buf + used, 1, BUF_SIZE, input);
+        used = used + len;
+    } while (len != 0);
+
+    buf = realloc(buf, used + 1);
+    buf[used] = '\0';
+
+    return buf;
 }
 
 int main(int argc, char *argv[]) {
@@ -21,22 +49,19 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    printf("Template directory: %s\n", template_dir);
-    printf("Template: %s var %s\n", pattern_start, pattern_end);
-
-    size_t temp_len = strlen(template_name) + strlen(template_dir) + 1;
-    char *temp_path = (char*) malloc(temp_len);
-    strcpy(temp_path, template_dir);
-    strcat(temp_path, template_name);
-
-    FILE *template = fopen(temp_path, "r");
+    char *temp_path = strconcat(template_dir, template_name);
+    FILE *template = fopen(temp_path, "rb");
     if (template == NULL) {
         fprintf(stderr, "Template doesn't exist: %s", temp_path);
         return 1;
     }
-
-    fclose(template);
     free(temp_path);
+
+    char *buf = freadall(template);
+    fclose(template);
+
+    printf("%s", buf);
+    free(buf);
 
     return 0;
 }
