@@ -1,3 +1,5 @@
+/* See LICENSE file for copyright and license details. */
+
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,12 +13,12 @@ void show_usage() {
     printf("Usage:\n\tsttemp template_name\n");
 }
 
-char* strconcat(char* first, char* second) {
+char* strconcat(const char* first, const char* second) {
     size_t first_len = strlen(first);
     size_t second_len = strlen(second);
     char *buf = malloc(first_len + second_len + 1);
-    strncpy(buf, first, first_len);
-    strncpy(buf + first_len, second, second_len + 1);
+    memcpy(buf, first, first_len);
+    memcpy(buf + first_len, second, second_len + 1);
     return buf;
 }
 
@@ -61,6 +63,31 @@ int main(int argc, char *argv[]) {
     fclose(template);
 
     printf("%s", buf);
+    printf("==================================\n");
+
+    const int pat_start_len = strlen(pattern_start);
+    const int pat_end_len = strlen(pattern_end);
+
+    char *start = buf;
+    while ((start = strstr(start, pattern_start)) != NULL) {
+        start = start + pat_start_len;
+        char* end = strstr(start, pattern_end);
+        if (end == NULL) {
+            fprintf(stderr, "Unfinished pattern: %10s", start);
+            return 1;
+        }
+
+        size_t token_length = end - start;
+        char* token_name = malloc(token_length + 1);
+        memcpy(token_name, start, token_length);
+        token_name[token_length] = '\0';
+
+        printf("%s\n", token_name);
+        free(token_name);
+
+        start = end + pat_end_len;
+    }
+
     free(buf);
 
     return 0;
