@@ -1,12 +1,11 @@
 /* See LICENSE file for copyright and license details. */
 
 #include "config.h"
+#include "files.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-
-#define BUF_SIZE 2097152
 
 void show_usage() {
     printf("sttemp - simple template manager\n");
@@ -22,22 +21,16 @@ char* strconcat(const char* first, const char* second) {
     return buf;
 }
 
-char* freadall(FILE* input) {
-    char *buf = malloc(BUF_SIZE);
-    size_t used = 0;
-    size_t len  = 0;
-
-    do {
-        buf = realloc(buf, BUF_SIZE + used);
-        len = fread(buf + used, 1, BUF_SIZE, input);
-        used = used + len;
-    } while (len != 0);
-
-    buf = realloc(buf, used + 1);
-    buf[used] = '\0';
-
-    return buf;
+char* get_placeholder_value(const char* placeholder_name) {
+    printf("Enter value for {%s}: ", placeholder_name);
+    return freadline(stdin);
 }
+
+struct token {
+    char* name;
+    char* value;
+};
+typedef struct token Token;
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -54,16 +47,13 @@ int main(int argc, char *argv[]) {
     char *temp_path = strconcat(template_dir, template_name);
     FILE *template = fopen(temp_path, "rb");
     if (template == NULL) {
-        fprintf(stderr, "Template doesn't exist: %s", temp_path);
+        fprintf(stderr, "Template doesn't exist: %s\n", temp_path);
         return 1;
     }
     free(temp_path);
 
     char *buf = freadall(template);
     fclose(template);
-
-    printf("%s", buf);
-    printf("==================================\n");
 
     const int pat_start_len = strlen(pattern_start);
     const int pat_end_len = strlen(pattern_end);
@@ -82,7 +72,9 @@ int main(int argc, char *argv[]) {
         memcpy(token_name, start, token_length);
         token_name[token_length] = '\0';
 
-        printf("%s\n", token_name);
+        char *value = get_placeholder_value(token_name);
+        printf("%s:%s\n", token_name, value);
+
         free(token_name);
 
         start = end + pat_end_len;
