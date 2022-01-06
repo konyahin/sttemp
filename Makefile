@@ -22,3 +22,9 @@ $(BIN): main.o files.o strings.o
 clean:
 	rm $(BIN)
 	rm *.o
+
+install: $(BIN)
+	cp sttemp /usr/local/bin/
+
+uninstall:
+	rm -f /usr/local/bin/sttemp
