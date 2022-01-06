@@ -15,4 +15,4 @@ char* freadline(FILE *input);
 /**
  * Read all content of file `input` and return it.
  */
-char* freadall(FILE* input);
+char* freadall(FILE* input, size_t* length);

@@ -2,6 +2,8 @@
 
 #include "config.h"
 #include "files.h"
+#include "strings.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,16 +11,14 @@
 
 void show_usage() {
     printf("sttemp - simple template manager\n");
-    printf("Usage:\n\tsttemp template_name\n");
+    printf("Usage:\n\tsttemp template_name file_name\n");
 }
 
-char* strconcat(const char* first, const char* second) {
-    size_t first_len = strlen(first);
-    size_t second_len = strlen(second);
-    char *buf = malloc(first_len + second_len + 1);
-    memcpy(buf, first, first_len);
-    memcpy(buf + first_len, second, second_len + 1);
-    return buf;
+FILE* open_template(const char* template_name) {
+    char *template_path = strconcat(template_dir, template_name);
+    FILE *template = fopen(template_path, "rb");
+    free(template_path);
+    return template;
 }
 
 char* get_placeholder_value(const char* placeholder_name) {
@@ -33,37 +33,38 @@ struct token {
 typedef struct token Token;
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
+    if (argc < 3) {
         show_usage();
         return 1;
     }
 
     char* template_name = argv[1];
-    if (strcmp("-h", template_name) == 0) {
-        show_usage();
-        return 0;
-    }
-
-    char *temp_path = strconcat(template_dir, template_name);
-    FILE *template = fopen(temp_path, "rb");
+    FILE* template = open_template(template_name);
     if (template == NULL) {
-        fprintf(stderr, "Template doesn't exist: %s\n", temp_path);
+        fprintf(stderr, "Template doesn't exist: %s\n", template_name);
         return 1;
     }
-    free(temp_path);
 
-    char *buf = freadall(template);
+    size_t buf_len = 0;
+    char *buf = freadall(template, &buf_len);
     fclose(template);
 
     const int pat_start_len = strlen(pattern_start);
     const int pat_end_len = strlen(pattern_end);
 
+    FILE* output = fopen(argv[2], "w");
+
     char *start = buf;
+    char *last = start;
     while ((start = strstr(start, pattern_start)) != NULL) {
+        fwrite(last, sizeof(char), start - last, output);
         start = start + pat_start_len;
+
         char* end = strstr(start, pattern_end);
         if (end == NULL) {
             fprintf(stderr, "Unfinished pattern: %10s", start);
+            fclose(output);
+            free(buf);
             return 1;
         }
 
@@ -73,13 +74,16 @@ int main(int argc, char *argv[]) {
         token_name[token_length] = '\0';
 
         char *value = get_placeholder_value(token_name);
-        printf("%s:%s\n", token_name, value);
+        fwrite(value, sizeof(char), strlen(value), output);
 
         free(token_name);
 
         start = end + pat_end_len;
+        last = start;
     }
 
+    fwrite(last, sizeof(char), buf_len - (last - buf), output);
+    fclose(output);
     free(buf);
 
     return 0;

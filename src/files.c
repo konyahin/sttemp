@@ -3,7 +3,7 @@
 #include "files.h"
 
 
-char* freadall(FILE* input) {
+char* freadall(FILE* input, size_t* length) {
     char *buf = malloc(BUF_SIZE);
     size_t used = 0;
     size_t len  = 0;
@@ -16,6 +16,8 @@ char* freadall(FILE* input) {
 
     buf = realloc(buf, used + 1);
     buf[used] = '\0';
+
+    *length = used;
 
     return buf;
 }
