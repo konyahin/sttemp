@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 
 void show_usage() {
     printf("sttemp - simple template manager\n");
@@ -55,7 +54,7 @@ char* get_placeholder_value(const char* name, size_t length) {
 
     Token* token = malloc(sizeof(Token));
     token->name = malloc(length);
-    strncpy(token->name, name, length);
+    memcpy(token->name, name, length);
     token->value = value;
 
     tokens = realloc(tokens, sizeof(Token) * ++tokens_len);

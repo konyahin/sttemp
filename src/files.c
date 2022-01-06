@@ -10,7 +10,7 @@ char* freadall(FILE* input, size_t* length) {
 
     do {
         buf = realloc(buf, BUF_SIZE + used);
-        len = fread(buf + used, 1, BUF_SIZE, input);
+        len = fread(buf + used, sizeof(char), BUF_SIZE, input);
         used = used + len;
     } while (len != 0);
 

@@ -1,5 +1,6 @@
-#include "strings.h"
+/* See LICENSE file for copyright and license details. */
 
+#include "strings.h"
 
 char* strconcat(const char* first, const char* second) {
     size_t first_len = strlen(first);
@@ -9,3 +10,4 @@ char* strconcat(const char* first, const char* second) {
     memcpy(buf + first_len, second, second_len + 1);
     return buf;
 }
+
