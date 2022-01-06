@@ -21,16 +21,47 @@ FILE* open_template(const char* template_name) {
     return template;
 }
 
-char* get_placeholder_value(const char* placeholder_name) {
-    printf("Enter value for {%s}: ", placeholder_name);
-    return freadline(stdin);
-}
-
 struct token {
     char* name;
     char* value;
 };
 typedef struct token Token;
+
+void free_token(Token* token) {
+    free(token->name);
+    free(token->value);
+    free(token);
+}
+
+Token** tokens = NULL;
+size_t tokens_len = 0;
+
+void free_tokens() {
+    for (size_t i = 0; i < tokens_len; i++) {
+        free_token(tokens[i]);
+    }
+    free(tokens);
+    tokens = NULL;
+}
+
+char* get_placeholder_value(const char* name, size_t length) {
+    for (size_t i = 0; i < tokens_len; i++) {
+        if (strncmp(tokens[i]->name, name, length) == 0) {
+            return tokens[i]->value;
+        }
+    }
+    printf("Enter value for {%.*s}: ", (int) length, name);
+    char* value =  freadline(stdin);
+
+    Token* token = malloc(sizeof(Token));
+    token->name = malloc(length);
+    strncpy(token->name, name, length);
+    token->value = value;
+
+    tokens = realloc(tokens, sizeof(Token) * ++tokens_len);
+    tokens[tokens_len - 1] = token;
+    return value;
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -69,14 +100,8 @@ int main(int argc, char *argv[]) {
         }
 
         size_t token_length = end - start;
-        char* token_name = malloc(token_length + 1);
-        memcpy(token_name, start, token_length);
-        token_name[token_length] = '\0';
-
-        char *value = get_placeholder_value(token_name);
+        char *value = get_placeholder_value(start, token_length);
         fwrite(value, sizeof(char), strlen(value), output);
-
-        free(token_name);
 
         start = end + pat_end_len;
         last = start;
@@ -85,6 +110,7 @@ int main(int argc, char *argv[]) {
     fwrite(last, sizeof(char), buf_len - (last - buf), output);
     fclose(output);
     free(buf);
+    free_tokens();
 
     return 0;
 }
