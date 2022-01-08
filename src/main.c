@@ -1,6 +1,5 @@
 /* See LICENSE file for copyright and license details. */
 
-#include "config.h"
 #include "files.h"
 #include "strings.h"
 
@@ -8,9 +7,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char template_dir[] = "/Users/antonkonjahin/projects/templates/";
+const char pattern_start[] = "{|";
+const char pattern_end[] = "|}";
+const int pat_start_len = sizeof(pattern_start) / sizeof(pattern_start[0]);
+const int pat_end_len = sizeof(pattern_end) / sizeof(pattern_end[0]);
+
 void show_usage() {
     printf("sttemp - simple template manager\n");
-    printf("Usage:\n\tsttemp template_name file_name\n");
+    printf("Usage:\n\tsttemp template_name [file_name]\n");
 }
 
 FILE* open_template(const char* template_name) {
@@ -44,6 +49,7 @@ void free_tokens() {
 }
 
 char* get_placeholder_value(const char* name, size_t length) {
+    // O(n) = n, but I don't worry about it right now
     for (size_t i = 0; i < tokens_len; i++) {
         if (strncmp(tokens[i]->name, name, length) == 0) {
             return tokens[i]->value;
@@ -63,9 +69,14 @@ char* get_placeholder_value(const char* name, size_t length) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 2) {
         show_usage();
         return 1;
+    }
+
+    if (strcmp("-h", argv[1]) == 0) {
+        show_usage();
+        return 0;
     }
 
     char* template_name = argv[1];
@@ -79,10 +90,7 @@ int main(int argc, char *argv[]) {
     char *buf = freadall(template, &buf_len);
     fclose(template);
 
-    const int pat_start_len = strlen(pattern_start);
-    const int pat_end_len = strlen(pattern_end);
-
-    FILE* output = fopen(argv[2], "w");
+    FILE* output = fopen(argv[argc > 2 ? 2 : 1], "w");
 
     char *start = buf;
     char *last = start;

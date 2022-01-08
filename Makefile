@@ -13,7 +13,7 @@ strings.o: src/strings.c src/strings.h
 files.o : src/files.c src/files.h
 	$(CC) $(CFLAGS) -c src/files.c
 
-main.o : src/main.c src/config.h
+main.o : src/main.c
 	$(CC) $(CFLAGS) -c src/main.c
 
 $(BIN): main.o files.o strings.o
@@ -28,3 +28,6 @@ install: $(BIN)
 
 uninstall:
 	rm -f /usr/local/bin/sttemp
+
+test: $(BIN)
+	./sttemp test && cat test && rm -f test
