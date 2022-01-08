@@ -10,8 +10,8 @@
 const char template_dir[] = "/Users/antonkonjahin/projects/templates/";
 const char pattern_start[] = "{|";
 const char pattern_end[] = "|}";
-const int pat_start_len = sizeof(pattern_start) / sizeof(pattern_start[0]);
-const int pat_end_len = sizeof(pattern_end) / sizeof(pattern_end[0]);
+const int pat_start_len = sizeof(pattern_start) / sizeof(pattern_start[0]) - 1;
+const int pat_end_len = sizeof(pattern_end) / sizeof(pattern_end[0]) - 1;
 
 void show_usage() {
     printf("sttemp - simple template manager\n");
@@ -80,6 +80,13 @@ int main(int argc, char *argv[]) {
     }
 
     char* template_name = argv[1];
+    char* target_name;
+    if (argc > 2) {
+        target_name = argv[2];
+    } else {
+        target_name = template_name;
+    }
+
     FILE* template = open_template(template_name);
     if (template == NULL) {
         fprintf(stderr, "Template doesn't exist: %s\n", template_name);
@@ -90,7 +97,7 @@ int main(int argc, char *argv[]) {
     char *buf = freadall(template, &buf_len);
     fclose(template);
 
-    FILE* output = fopen(argv[argc > 2 ? 2 : 1], "w");
+    FILE* output = fopen(target_name, "w");
 
     char *start = buf;
     char *last = start;
