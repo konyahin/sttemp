@@ -2,6 +2,7 @@
 
 #include "files.h"
 #include "strings.h"
+#include "token.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,9 @@ const char pattern_start[] = "{|";
 const char pattern_end[] = "|}";
 const int pat_start_len = sizeof(pattern_start) / sizeof(pattern_start[0]) - 1;
 const int pat_end_len = sizeof(pattern_end) / sizeof(pattern_end[0]) - 1;
+
+enum search {WO_ENV, W_ENV};
+typedef enum search Search;
 
 void show_usage() {
     printf("sttemp - simple template manager\n");
@@ -25,46 +29,23 @@ FILE* open_template(const char* template_name) {
     return template;
 }
 
-struct token {
-    char* name;
-    char* value;
-};
-typedef struct token Token;
-
-void free_token(Token* token) {
-    free(token->name);
-    free(token->value);
-    free(token);
-}
-
-Token** tokens = NULL;
-size_t tokens_len = 0;
-
-void free_tokens() {
-    for (size_t i = 0; i < tokens_len; i++) {
-        free_token(tokens[i]);
+char* get_placeholder_value(Search search_type, const char* name, size_t length) {
+    char* value = find_in_tokens(name, length);
+    if (value != NULL) {
+        return value;
     }
-    free(tokens);
-    tokens = NULL;
-}
-
-char* get_placeholder_value(const char* name, size_t length) {
-    // O(n) = n, but I don't worry about it right now
-    for (size_t i = 0; i < tokens_len; i++) {
-        if (strncmp(tokens[i]->name, name, length) == 0) {
-            return tokens[i]->value;
+    char* new_name = strndup(name, length);
+    if (search_type == W_ENV) {
+        value = getenv(new_name);
+        if (value != NULL) {
+            free(new_name);
+            return value;
         }
     }
+
     printf("Enter value for {%.*s}: ", (int) length, name);
-    char* value =  freadline(stdin);
-
-    Token* token = malloc(sizeof(Token));
-    token->name = malloc(length);
-    memcpy(token->name, name, length);
-    token->value = value;
-
-    tokens = realloc(tokens, sizeof(Token) * ++tokens_len);
-    tokens[tokens_len - 1] = token;
+    value =  freadline(stdin);
+    add_new_token(new_name, value);
     return value;
 }
 
@@ -79,10 +60,17 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    char* template_name = argv[1];
+    size_t first_file_arg = 1;
+    Search search_type = WO_ENV;
+    if (strcmp("-e", argv[1]) == 0) {
+        search_type = W_ENV;
+        first_file_arg++;
+    }
+    
+    char* template_name = argv[first_file_arg++];
     char* target_name;
-    if (argc > 2) {
-        target_name = argv[2];
+    if (first_file_arg < argc) {
+        target_name  = argv[first_file_arg];
     } else {
         target_name = template_name;
     }
@@ -114,7 +102,7 @@ int main(int argc, char *argv[]) {
         }
 
         size_t token_length = end - start;
-        char *value = get_placeholder_value(start, token_length);
+        char *value = get_placeholder_value(search_type, start, token_length);
         fwrite(value, sizeof(char), strlen(value), output);
 
         start = end + pat_end_len;

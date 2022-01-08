@@ -1,5 +1,6 @@
 .POSIX:
 .SUFFIXES:
+.PHONY: clean uninstall test 
 
 BIN    = sttemp
 CC     = cc
@@ -13,11 +14,14 @@ strings.o: src/strings.c src/strings.h
 files.o : src/files.c src/files.h
 	$(CC) $(CFLAGS) -c src/files.c
 
+token.o: src/token.c src/token.h
+	$(CC) $(CFLAGS) -c src/token.c
+
 main.o : src/main.c
 	$(CC) $(CFLAGS) -c src/main.c
 
-$(BIN): main.o files.o strings.o
-	$(CC) main.o files.o strings.o -o $(BIN)
+$(BIN): main.o files.o strings.o token.o
+	$(CC) main.o files.o strings.o token.o -o $(BIN)
 
 clean:
 	rm $(BIN)
@@ -31,3 +35,4 @@ uninstall:
 
 test: $(BIN)
 	./sttemp test && cat test && rm -f test
+
