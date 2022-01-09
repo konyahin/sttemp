@@ -1,5 +1,6 @@
 /* See LICENSE file for copyright and license details. */
 
+#include "config.h"
 #include "files.h"
 #include "strings.h"
 #include "token.h"
@@ -8,9 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char template_dir[] = "/Users/antonkonjahin/projects/templates/";
-const char pattern_start[] = "{|";
-const char pattern_end[] = "|}";
 const int pat_start_len = sizeof(pattern_start) / sizeof(pattern_start[0]) - 1;
 const int pat_end_len = sizeof(pattern_end) / sizeof(pattern_end[0]) - 1;
 
@@ -23,7 +21,14 @@ void show_usage() {
 }
 
 FILE* open_template(const char* template_name) {
-    char *template_path = strconcat(template_dir, template_name);
+    const char* dir;
+    if (template_dir[0] == '~') {
+        char* homedir = getenv("HOME");
+        dir = strconcat(homedir, template_dir + 1);
+    } else {
+        dir = template_dir;
+    }
+    char *template_path = strconcat(dir, template_name);
     FILE *template = fopen(template_path, "rb");
     free(template_path);
     return template;

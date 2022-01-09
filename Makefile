@@ -1,10 +1,13 @@
 .POSIX:
 .SUFFIXES:
-.PHONY: clean uninstall test 
+.PHONY: clean install uninstall test 
 
-BIN    = sttemp
-CC     = cc
-CFLAGS = -Wall -Werror -O
+BIN       = sttemp
+CFLAGS    = -Wall -Werror -Os
+LDFLAGS   = -s
+
+PREFIX    = /usr/local
+MANPREFIX = ${PREFIX}/share/man
 
 all: $(BIN)
 
@@ -17,22 +20,26 @@ files.o : src/files.c src/files.h
 token.o: src/token.c src/token.h
 	$(CC) $(CFLAGS) -c src/token.c
 
-main.o : src/main.c
+main.o : src/main.c src/config.h
 	$(CC) $(CFLAGS) -c src/main.c
 
 $(BIN): main.o files.o strings.o token.o
 	$(CC) main.o files.o strings.o token.o -o $(BIN)
 
 clean:
-	rm $(BIN)
-	rm *.o
+	rm -f $(BIN)
+	rm -f *.o
 
 install: $(BIN)
-	cp sttemp /usr/local/bin/
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+	install -m 775 $(BIN) $(DESTDIR)$(PREFIX)/bin/
+	install -m 644 $(BIN).1 $(DESTDIR)$(MANPREFIX)/man1/
 
 uninstall:
-	rm -f /usr/local/bin/sttemp
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(BIN)
+	rm -f $(DESTDIR)$(MANPREFIX)/man1/$(BIN).1
 
 test: $(BIN)
-	./sttemp test && cat test && rm -f test
+	./$(BIN) test && cat test && rm -f test
 
