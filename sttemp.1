@@ -1,17 +1,14 @@
 .TH STTEMP 1 2021-01-09 V1.0
-
 .SH NAME
 sttemp \- simple template manager
-
 .SH SYNOPSIS
 .B sttemp
 [\fB\-h\fR]
 
 .B sttemp
 [\fB\-e\fR]
-\fBtemplate\fR
-[\fBoutput\fR]
-
+\fItemplate\fR
+[\fIoutput\fR]
 .SH DESCRIPTION
 .B sttemp
 copy file from your template directory and fill all 
@@ -20,7 +17,6 @@ Template directory and substitution pattern described in
 \fBsrc/config.h\fR file, in suckless style. You can use
 \fB~\fR as \fBfirst\fR symbol of your path, for relative
 path from your home directory.
-
 .SH OPTIONS
 .TP
 .BI \-h
@@ -36,7 +32,6 @@ name of file in your templates directory, which will use
 to create new file
 .TP
 .BI output
-name of target file, if omit - sttemp will use template name
-
+name of target file, if omit - \fBsttemp\fR will use template name
 .SH AUTHOR
-Anton Konyahin <me@konyahin.xyz>
+Anton Konyahin <\fIme@konyahin.xyz\fR>

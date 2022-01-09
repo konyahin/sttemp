@@ -9,7 +9,7 @@ LDFLAGS   = -s
 PREFIX    = /usr/local
 MANPREFIX = ${PREFIX}/share/man
 
-all: $(BIN)
+all: $(BIN) README.md
 
 strings.o: src/strings.c src/strings.h
 	$(CC) $(CFLAGS) -c src/strings.c
@@ -25,6 +25,9 @@ main.o : src/main.c src/config.h
 
 $(BIN): main.o files.o strings.o token.o
 	$(CC) main.o files.o strings.o token.o -o $(BIN)
+
+README.md: $(BIN).1
+	pandoc $(BIN).1 -o README.md
 
 clean:
 	rm -f $(BIN)

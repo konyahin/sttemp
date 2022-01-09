@@ -6,7 +6,7 @@ sttemp - simple template manager
 
 **sttemp** \[**-h**\]
 
-**sttemp** \[**-e**\] **template** \[**output**\]
+**sttemp** \[**-e**\] *template* \[*output*\]
 
 # DESCRIPTION
 
@@ -35,8 +35,8 @@ for relative path from your home directory.
 
 **output**
 
-:   name of target file, if omit - sttemp will use template name
+:   name of target file, if omit - **sttemp** will use template name
 
 # AUTHOR
 
-Anton Konyahin \<me\@konyahin.xyz>
+Anton Konyahin \<*me\@konyahin.xyz*\>
