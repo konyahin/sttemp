@@ -3,6 +3,8 @@
 .PHONY: clean install uninstall test 
 
 BIN       = sttemp
+SRCS      = main.c token.c files.c strings.c
+OBJC      = ${SRCS:.c=.o}
 CFLAGS    = -Wall -Werror -Os
 LDFLAGS   = -s
 
