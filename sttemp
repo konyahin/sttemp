@@ -1,0 +1,62 @@
+#!/usr/bin/env sh
+
+set -eu
+
+ask () {
+	echo "Enter $1:" >&2
+	read -r value
+    echo "$value"
+}
+
+fill_vars () {
+	vars=$(envsubst -v "$(cat "$TEMPL")")
+
+	for var in $vars
+	do
+		[ -z "$(printenv "$var")" ] &&
+			eval "export $var=$($STTEMP_ASK "$var")"
+	done
+}
+
+print_templ () {
+	envsubst <"$TEMPL"
+}
+
+print_help () {
+	cat <<EOF
+sttemp [-lhv] [template] - simple template manager
+Usage:
+	-h	print this help
+	-l	print list of all templates
+	-v	print all variables from template
+	template	fill shell-like variables in template file and print his content. Missing environment variable will be asked on stderr.
+EOF
+	exit
+}
+
+
+TEMPL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/sttemp"
+mkdir -p "$TEMPL_DIR"
+
+[ -z "${STTEMP_ASK:-}" ] && STTEMP_ASK=ask
+
+[ "$#" -lt 1 ] && print_help
+
+case "$1" in
+	-h) print_help ;;
+	-l) ls "$TEMPL_DIR" && exit ;;
+    -v) PRINT_VAR=true && shift 1 ;;
+esac
+
+TEMPL="$TEMPL_DIR/$1"
+
+[ ! -f "$TEMPL" ] &&
+	echo "Template $1 doesn't exist in $TEMPL_DIR" >&2 &&
+	exit 1
+
+[ -n "${PRINT_VAR:-}" ] &&
+    envsubst -v "$(cat "$TEMPL")" &&
+    exit
+
+fill_vars
+print_templ
