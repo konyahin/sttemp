@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+set -eu
+
+DISPLAY=:0.0
+
+export STTEMP_ASK=$(
+	cat <<'EOF'
+ask () {
+	echo $(dmenu -p "Enter $1" </dev/null)
+}
+EOF
+)
+
+TEMPL_NAME=$(sttemp -l | dmenu)
+TEMPL_TEXT=$(sttemp "$TEMPL_NAME")
+
+echo "$TEMPL_TEXT" | xclip -selection clipboard
+xdotool key --clearmodifiers "Shift+Insert"

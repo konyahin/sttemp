@@ -14,7 +14,7 @@ fill_vars () {
 	for var in $vars
 	do
 		[ -z "$(printenv "$var")" ] &&
-			eval "export $var=$($STTEMP_ASK "$var")"
+			eval "export $var=$(ask "$var")"
 	done
 }
 
@@ -38,7 +38,7 @@ EOF
 TEMPL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/sttemp"
 mkdir -p "$TEMPL_DIR"
 
-[ -z "${STTEMP_ASK:-}" ] && STTEMP_ASK=ask
+[ -n "${STTEMP_ASK:-}" ] && eval "$STTEMP_ASK"
 
 [ "$#" -lt 1 ] && print_help
 
