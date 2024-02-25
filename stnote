@@ -19,4 +19,4 @@ export URL=$(xclip -o -selection primary)
 xdotool key --clearmodifiers "Escape"
 
 FILE_NAME=$(date '+%Y-%m-%d-%H%M%S')
-sttemp webnote >> "/home/anton/data/notes/web/$FILE_NAME.md"
+sttemp webnote >> "/home/anton/public_gopher/web/$FILE_NAME.md"
