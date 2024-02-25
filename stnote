@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+set -eu
+
+export STTEMP_ASK=$(
+	cat <<'EOF'
+ask () {
+	echo $(dmenu -p "Enter $1" </dev/null)
+}
+EOF
+)
+
+
+export BODY=$(xclip -o)
+
+xdotool key --clearmodifiers "Ctrl+l"
+xdotool key --clearmodifiers "Ctrl+c"
+export URL=$(xclip -o -selection primary)
+xdotool key --clearmodifiers "Escape"
+
+FILE_NAME=$(date '+%Y-%m-%d-%H%M%S')
+sttemp webnote >> "/home/anton/data/notes/web/$FILE_NAME.md"

@@ -14,7 +14,8 @@ fill_vars () {
 	for var in $vars
 	do
 		[ -z "$(printenv "$var")" ] &&
-			eval "export $var=$(ask "$var")"
+			value="$(ask "$var")" &&
+			eval "export $var=\"$value\""
 	done
 }
 
@@ -24,39 +25,68 @@ print_templ () {
 
 print_help () {
 	cat <<EOF
-sttemp [-lhv] [template] - simple template manager
+sttemp - simple template manager
 Usage:
-	-h	print this help
-	-l	print list of all templates
-	-v	print all variables from template
-	template	fill shell-like variables in template file and print his content. Missing environment variable will be asked on stderr.
+	-h      Print this help
+	-l      Print list of all templates
+	-v name Print all variables from template
+	-d dir  Set directory with templates.
+	name    Fill shell-like variables in template file and print his content. Missing environment variable will be asked on stderr.
 EOF
 	exit
 }
 
-
-TEMPL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/sttemp"
-mkdir -p "$TEMPL_DIR"
-
-[ -n "${STTEMP_ASK:-}" ] && eval "$STTEMP_ASK"
-
 [ "$#" -lt 1 ] && print_help
 
-case "$1" in
-	-h) print_help ;;
-	-l) ls "$TEMPL_DIR" && exit ;;
-    -v) PRINT_VAR=true && shift 1 ;;
-esac
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		-h)
+			HELP=YES
+			shift
+			;;
+		-l)
+			LIST_TEMPL=YES
+			shift
+			;;
+		-v)
+			PRINT_VAR=YES
+			shift
+			;;
+		-d)
+			TEMPL_DIR="$2"
+			shift 2
+			;;
+		*)
+			TEMPL_NAME="$1"
+			shift
+			;;
+	esac
+done
 
-TEMPL="$TEMPL_DIR/$1"
+[ -n "${HELP:-}" ] && print_help
+
+[ -z "${TEMPL_DIR:-}" ] &&
+	TEMPL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/sttemp" &&
+	mkdir -p "$TEMPL_DIR"
+
+[ -n "${LIST_TEMPL:-}" ] &&
+	ls "$TEMPL_DIR" &&
+	exit
+
+[ -z "${TEMPL_NAME:-}" ] &&
+	echo "You should specify template name" &&
+	exit 1
+
+TEMPL="$TEMPL_DIR/$TEMPL_NAME"
 
 [ ! -f "$TEMPL" ] &&
-	echo "Template $1 doesn't exist in $TEMPL_DIR" >&2 &&
+	echo "Template $TEMPL_NAME doesn't exist in $TEMPL_DIR" >&2 &&
 	exit 1
 
 [ -n "${PRINT_VAR:-}" ] &&
     envsubst -v "$(cat "$TEMPL")" &&
     exit
 
+[ -n "${STTEMP_ASK:-}" ] && eval "$STTEMP_ASK"
 fill_vars
 print_templ

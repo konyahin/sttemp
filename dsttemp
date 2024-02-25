@@ -2,8 +2,6 @@
 
 set -eu
 
-DISPLAY=:0.0
-
 export STTEMP_ASK=$(
 	cat <<'EOF'
 ask () {
