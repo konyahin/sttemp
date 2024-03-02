@@ -5,7 +5,7 @@ set -eu
 ask () {
 	echo "Enter $1:" >&2
 	read -r value
-    echo "$value"
+	echo "$value"
 }
 
 fill_vars () {
