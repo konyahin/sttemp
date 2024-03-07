@@ -2,6 +2,8 @@
 
 set -eu
 
+. ~/.profile
+
 export STTEMP_ASK=$(
 	cat <<'EOF'
 ask () {
@@ -19,4 +21,5 @@ export URL=$(xclip -o -selection primary)
 xdotool key --clearmodifiers "Escape"
 
 FILE_NAME=$(date '+%Y-%m-%d-%H%M%S')
-sttemp webnote >> "/home/anton/public_gopher/web/$FILE_NAME.md"
+sttemp webnote >> "${NOTES_QUEUE}/$FILE_NAME.md"
+notify-send -t 1500 "Saved to $FILE_NAME.md"
