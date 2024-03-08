@@ -20,6 +20,5 @@ xdotool key --clearmodifiers "Ctrl+c"
 export URL=$(xclip -o -selection primary)
 xdotool key --clearmodifiers "Escape"
 
-FILE_NAME=$(date '+%Y-%m-%d-%H%M%S')
-sttemp webnote >> "${NOTES_QUEUE}/$FILE_NAME.md"
-notify-send -t 1500 "Saved to $FILE_NAME.md"
+sttemp webnote >> "$SCRATCH_PATH"
+notify-send -t 1500 "Saved to scratch file."
