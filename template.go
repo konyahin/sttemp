@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -10,6 +11,7 @@ type Template struct {
 	Name      string
 	Title     string
 	Path      string
+	Content   string
 	Variables map[string]string
 }
 
@@ -32,7 +34,18 @@ func NewTemplate(state State, path string) *Template {
 		template.Title = title
 	}
 
+	content, err := os.ReadFile(template.Path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	template.Content = string(content)
 	template.Variables = make(map[string]string)
+
+	variables := findVariables(content)
+	for _, variable := range variables {
+		template.Variables[variable] = ""
+	}
 
 	return template
 }
@@ -43,6 +56,15 @@ func (t Template) String() string {
 	if t.Name != t.Title {
 		buf.WriteString(" - ")
 		buf.WriteString(t.Title)
+	}
+
+	buf.WriteString("\n")
+	if len(t.Variables) > 0 {
+		for key := range t.Variables {
+			buf.WriteString(key)
+			buf.WriteString(" ")
+		}
+		buf.WriteString("\n")
 	}
 	return buf.String()
 }

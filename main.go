@@ -6,11 +6,11 @@ import (
 )
 
 func main() {
-	var state *State
+	var state State
 	if len(os.Args) > 2 && os.Args[1] == "-C" {
-		state = NewState(os.Args[2])
+		state.SetTemplateDir(os.Args[2])
 	} else {
-		state = NewStateWithDefaultDir()
+		state.DefaultTemplateDir()
 	}
 
 	for _, template := range state.Templates() {
