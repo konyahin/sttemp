@@ -1,36 +1,69 @@
 package main
 
-type parsingState int8
+import "iter"
+
+type tokenType byte
 
 const (
-	outsideVar parsingState = iota
-	insideVar
-	escapingBracket
+	Text tokenType = iota
+	Variable
 )
 
+type parsingState byte
+
+const (
+	OutsideVar parsingState = iota
+	InsideVar
+	EscapingBracket
+)
+
+func tokens(content []byte) iter.Seq2[tokenType, []byte] {
+	return func(yield func(tokenType, []byte) bool) {
+		state := OutsideVar
+		oldIdx := 0
+
+		for i, c := range content {
+			switch {
+			case state == OutsideVar && c == '{':
+				state = InsideVar
+				if !yield(Text, content[oldIdx:i]) {
+					return
+				}
+			case state == OutsideVar && c == '\\':
+				state = EscapingBracket
+				if !yield(Text, content[oldIdx:i]) {
+					return
+				}
+			case state == EscapingBracket && c == '{':
+				state = OutsideVar
+			case state == EscapingBracket:
+				state = OutsideVar
+				continue
+			case state == InsideVar && c == '}':
+				state = OutsideVar
+				if !yield(Variable, content[oldIdx+1:i]) {
+					return
+				}
+			case state == InsideVar && c == '\n':
+				state = OutsideVar
+				if !yield(Text, content[oldIdx:i]) {
+					return
+				}
+			default:
+				continue
+			}
+			oldIdx = i
+		}
+	}
+}
+
 func findVariables(content []byte) []string {
-	state := outsideVar
 
 	var vars []string
-	var buf []byte
 
-	for _, c := range content {
-		switch {
-		case state == outsideVar && c == '{':
-			state = insideVar
-		case state == outsideVar && c == '\\':
-			state = escapingBracket
-		case state == escapingBracket:
-			state = outsideVar
-		case state == insideVar && c != '}' && c != '\n':
-			buf = append(buf, c)
-		case state == insideVar && c == '}':
-			state = outsideVar
-			vars = append(vars, string(buf))
-			buf = nil
-		case state == insideVar && c == '\n':
-			state = outsideVar
-			buf = nil
+	for token, content := range tokens(content) {
+		if token == Variable {
+			vars = append(vars, string(content))
 		}
 	}
 
