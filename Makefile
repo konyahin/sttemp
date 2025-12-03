@@ -9,7 +9,7 @@ sttemp: *.go
 	go build
 
 test: sttemp
-	go test
+	go test ./...
 
 install: sttemp
 	go install .

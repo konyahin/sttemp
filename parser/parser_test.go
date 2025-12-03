@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"slices"
@@ -10,10 +10,10 @@ type VariableTestCase struct {
 	variables []string
 }
 
-func NewVariableTestCase(vars ...string) *VariableTestCase {
+func NewVariableTestCase(content string, vars ...string) *VariableTestCase {
 	testCase := new(VariableTestCase)
-	testCase.content = []byte(vars[0])
-	testCase.variables = vars[1:]
+	testCase.content = []byte(content)
+	testCase.variables = vars
 	return testCase
 }
 
@@ -30,7 +30,7 @@ func TestFindVariables(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		vars := findVariables(testCase.content)
+		vars := FindVariables(testCase.content)
 		if !slices.Equal(vars, testCase.variables) {
 			t.Fatalf("We should get %#v, but got %#v", testCase.variables, vars)
 		}

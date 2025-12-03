@@ -1,4 +1,4 @@
-package main
+package parser
 
 import "iter"
 
@@ -57,7 +57,7 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 	}
 }
 
-func findVariables(content []byte) []string {
+func FindVariables(content []byte) []string {
 
 	var vars []string
 

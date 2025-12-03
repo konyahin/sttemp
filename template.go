@@ -1,6 +1,7 @@
 package main
 
 import (
+	"konyahin.xyz/sttemp/parser"
 	"log"
 	"os"
 	"path/filepath"
@@ -42,7 +43,7 @@ func NewTemplate(state State, path string) *Template {
 	template.Content = string(content)
 	template.Variables = make(map[string]string)
 
-	variables := findVariables(content)
+	variables := parser.FindVariables(content)
 	for _, variable := range variables {
 		template.Variables[variable] = ""
 	}
