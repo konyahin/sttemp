@@ -62,7 +62,7 @@ func findVariables(content []byte) []string {
 	var vars []string
 
 	for token, content := range tokens(content) {
-		if token == Variable {
+		if token == Variable && len(content) > 0 {
 			vars = append(vars, string(content))
 		}
 	}
