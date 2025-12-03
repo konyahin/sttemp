@@ -14,16 +14,21 @@ type State struct {
 	TemplateDir string
 }
 
-func (s *State) DefaultTemplateDir() {
+func NewState() *State {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	s.TemplateDir = filepath.Join(home, defaultTemplateDir)
+	state := new(State)
+	state.TemplateDir = filepath.Join(home, defaultTemplateDir)
+	return state
 }
 
 func (s *State) SetTemplateDir(templatesPath string) {
+	if templatesPath == "" {
+		return
+	}
 	templatesPath, err := filepath.Abs(templatesPath)
 	if err != nil {
 		log.Fatal(err)
@@ -32,8 +37,8 @@ func (s *State) SetTemplateDir(templatesPath string) {
 	s.TemplateDir = templatesPath
 }
 
-func (s State) Templates() []*Template {
-	var templates []*Template
+func (s State) Templates() map[string]*Template {
+	templates := make(map[string]*Template)
 
 	err := filepath.WalkDir(s.TemplateDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -45,7 +50,8 @@ func (s State) Templates() []*Template {
 		}
 
 		if !d.IsDir() {
-			templates = append(templates, NewTemplate(s, path))
+			template := NewTemplate(s, path)
+			templates[template.Name] = template
 		}
 
 		return nil

@@ -1,16 +1,17 @@
 package main
 
 import (
-	"konyahin.xyz/sttemp/parser"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"konyahin.xyz/sttemp/parser"
 )
 
 type Template struct {
 	Name      string
-	Title     string
+	Filename  string
 	Path      string
 	Content   string
 	Variables map[string]string
@@ -29,10 +30,10 @@ func NewTemplate(state State, path string) *Template {
 	}
 
 	if parent == state.TemplateDir {
-		template.Title = name
+		template.Filename = name
 	} else {
 		_, title := filepath.Split(parent)
-		template.Title = title
+		template.Filename = title
 	}
 
 	content, err := os.ReadFile(template.Path)
@@ -54,18 +55,9 @@ func NewTemplate(state State, path string) *Template {
 func (t Template) String() string {
 	var buf strings.Builder
 	buf.WriteString(t.Name)
-	if t.Name != t.Title {
+	if t.Name != t.Filename {
 		buf.WriteString(" - ")
-		buf.WriteString(t.Title)
-	}
-
-	buf.WriteString("\n")
-	if len(t.Variables) > 0 {
-		for key := range t.Variables {
-			buf.WriteString(key)
-			buf.WriteString(" ")
-		}
-		buf.WriteString("\n")
+		buf.WriteString(t.Filename)
 	}
 	return buf.String()
 }
