@@ -22,6 +22,7 @@ func TestFindVariables(t *testing.T) {
 		NewVariableTestCase(""),
 		NewVariableTestCase("without variables"),
 		NewVariableTestCase("variable {A}", "A"),
+		NewVariableTestCase("variable {A} and {A}", "A"),
 		NewVariableTestCase("empty variable {}"),
 		NewVariableTestCase("line break {A\n}"),
 		NewVariableTestCase("escaping \\{A}"),

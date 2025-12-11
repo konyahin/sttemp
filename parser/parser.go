@@ -1,6 +1,10 @@
 package parser
 
-import "iter"
+import (
+	"iter"
+	"maps"
+	"slices"
+)
 
 type tokenType byte
 
@@ -59,13 +63,15 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 
 func FindVariables(content []byte) []string {
 
-	var vars []string
+	vars := make(map[string]struct{})
 
 	for token, content := range tokens(content) {
 		if token == Variable && len(content) > 0 {
-			vars = append(vars, string(content))
+			vars[string(content)] = struct{}{}
 		}
 	}
 
-	return vars
+	result := slices.Collect(maps.Keys(vars))
+	slices.Sort(result)
+	return result
 }
