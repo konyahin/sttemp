@@ -4,6 +4,7 @@ import (
 	"iter"
 	"maps"
 	"slices"
+	"strings"
 )
 
 type tokenType byte
@@ -48,6 +49,8 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 				if !yield(Variable, content[oldIdx+1:i]) {
 					return
 				}
+				oldIdx = i + 1
+				continue
 			case state == InsideVar && c == '\n':
 				state = OutsideVar
 				if !yield(Text, content[oldIdx:i]) {
@@ -58,6 +61,10 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 			}
 			oldIdx = i
 		}
+
+		if oldIdx < len(content) {
+			yield(Text, content[oldIdx:])
+		}
 	}
 }
 
@@ -65,13 +72,29 @@ func FindVariables(content []byte) []string {
 
 	vars := make(map[string]struct{})
 
-	for token, content := range tokens(content) {
-		if token == Variable && len(content) > 0 {
-			vars[string(content)] = struct{}{}
+	for token, value := range tokens(content) {
+		if token == Variable && len(value) > 0 {
+			vars[string(value)] = struct{}{}
 		}
 	}
 
 	result := slices.Collect(maps.Keys(vars))
 	slices.Sort(result)
 	return result
+}
+
+func FillTemplate(content []byte, values map[string]string) string {
+	var sb strings.Builder
+	for token, value := range tokens(content) {
+		switch {
+		case token == Text:
+			sb.Write(value)
+		case token == Variable && len(value) > 0:
+			val, ok := values[string(value)]
+			if ok {
+				sb.WriteString(val)
+			}
+		}
+	}
+	return sb.String()
 }
