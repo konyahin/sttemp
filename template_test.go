@@ -1,4 +1,4 @@
-package parser
+package main
 
 import (
 	"slices"
@@ -45,9 +45,9 @@ func TestFindVariables(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		vars := FindVariables(testCase.content)
-		if !slices.Equal(vars, testCase.variables) {
-			t.Fatalf("We should get %#v, but got %#v", testCase.variables, vars)
+		template := NewTemplate("", testCase.content)
+		if !slices.Equal(template.Variables, testCase.variables) {
+			t.Fatalf("We should get %#v, but got %#v", testCase.variables, template.Variables)
 		}
 	}
 }
@@ -81,7 +81,8 @@ func TestFillTemplate(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		result := FillTemplate([]byte(testCase.content), testCase.values)
+		template := NewTemplate("", []byte(testCase.content))
+		result := template.fillTemplate(testCase.values)
 		if result != testCase.result {
 			t.Errorf("Test case: %#v", testCase)
 			t.Fatalf("We should get %#v, but got %#v", testCase.result, result)
