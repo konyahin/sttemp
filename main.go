@@ -91,6 +91,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	names := flag.Args()
+	if len(names) > 0 {
+		for _, name := range names {
+			for _, t := range templates {
+				template := NewTemplate(t.Name, t.Content)
+				values := make(map[string]string)
+				for _, variable := range template.Variables {
+					values[variable] = os.Getenv(variable)
+				}
+				if name == template.Name {
+					fmt.Println(template.fillTemplate(values))
+				}
+			}
+		}
+		return
+	}
+
 	for _, t := range templates {
 		template := NewTemplate(t.Name, t.Content)
 		fmt.Println(template)
