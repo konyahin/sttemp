@@ -7,10 +7,15 @@ import (
 	"strings"
 )
 
-type tokenType byte
+type Token struct {
+	Type TokenType
+	Content []byte
+}
+
+type TokenType byte
 
 const (
-	Text tokenType = iota
+	Text TokenType = iota
 	Variable
 )
 
@@ -22,8 +27,8 @@ const (
 	EscapingBracket
 )
 
-func tokens(content []byte) iter.Seq2[tokenType, []byte] {
-	return func(yield func(tokenType, []byte) bool) {
+func Tokens(content []byte) iter.Seq[Token] {
+	return func(yield func(Token) bool) {
 		state := OutsideVar
 		oldIdx := 0
 
@@ -31,12 +36,12 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 			switch {
 			case state == OutsideVar && c == '{':
 				state = InsideVar
-				if !yield(Text, content[oldIdx:i]) {
+				if !yield(Token{Text, content[oldIdx:i]}) {
 					return
 				}
 			case state == OutsideVar && c == '\\':
 				state = EscapingBracket
-				if !yield(Text, content[oldIdx:i]) {
+				if !yield(Token{Text, content[oldIdx:i]}) {
 					return
 				}
 			case state == EscapingBracket && c == '{':
@@ -46,14 +51,14 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 				continue
 			case state == InsideVar && c == '}':
 				state = OutsideVar
-				if !yield(Variable, content[oldIdx+1:i]) {
+				if !yield(Token{Variable, content[oldIdx+1:i]}) {
 					return
 				}
 				oldIdx = i + 1
 				continue
 			case state == InsideVar && c == '\n':
 				state = OutsideVar
-				if !yield(Text, content[oldIdx:i]) {
+				if !yield(Token{Text, content[oldIdx:i]}) {
 					return
 				}
 			default:
@@ -63,7 +68,7 @@ func tokens(content []byte) iter.Seq2[tokenType, []byte] {
 		}
 
 		if oldIdx < len(content) {
-			yield(Text, content[oldIdx:])
+			yield(Token{Text, content[oldIdx:]})
 		}
 	}
 }
@@ -72,9 +77,9 @@ func FindVariables(content []byte) []string {
 
 	vars := make(map[string]struct{})
 
-	for token, value := range tokens(content) {
-		if token == Variable && len(value) > 0 {
-			vars[string(value)] = struct{}{}
+	for token := range Tokens(content) {
+		if token.Type == Variable && len(token.Content) > 0 {
+			vars[string(token.Content)] = struct{}{}
 		}
 	}
 
@@ -85,12 +90,12 @@ func FindVariables(content []byte) []string {
 
 func FillTemplate(content []byte, values map[string]string) string {
 	var sb strings.Builder
-	for token, value := range tokens(content) {
+	for token := range Tokens(content) {
 		switch {
-		case token == Text:
-			sb.Write(value)
-		case token == Variable && len(value) > 0:
-			val, ok := values[string(value)]
+		case token.Type == Text:
+			sb.Write(token.Content)
+		case token.Type == Variable && len(token.Content) > 0:
+			val, ok := values[string(token.Content)]
 			if ok {
 				sb.WriteString(val)
 			}

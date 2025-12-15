@@ -23,7 +23,7 @@ type FillTemplateTestCase struct {
 	values  map[string]string
 }
 
-func newFillTemplateTestCase(content string, result string, values  map[string]string) *FillTemplateTestCase {
+func newFillTemplateTestCase(content string, result string, values map[string]string) *FillTemplateTestCase {
 	testCase := new(FillTemplateTestCase)
 	testCase.content = content
 	testCase.result = result
@@ -71,8 +71,8 @@ func TestFillTemplate(t *testing.T) {
 			"B": "2",
 		}),
 		newFillTemplateTestCase("Test {A\n} rest {B} and {B C}", "Test {A\n} rest SOME TEXT and ANOTHER TEXT", map[string]string{
-			"A": "WITHOUT",
-			"B": "SOME TEXT",
+			"A":   "WITHOUT",
+			"B":   "SOME TEXT",
 			"B C": "ANOTHER TEXT",
 		}),
 		newFillTemplateTestCase("Test {A} rest {B}!", "Test  rest SOME TEXT!", map[string]string{
