@@ -60,7 +60,7 @@ func TestFindVariables(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			template := NewTemplate("", []byte(tt.content))
+			template := NewTemplate(&TemplateFile{}, []byte(tt.content))
 			if !slices.Equal(template.Variables, tt.variables) {
 				t.Fatalf("We should get %#v, but got %#v", tt.variables, template.Variables)
 			}
@@ -161,7 +161,7 @@ func TestFillTemplate(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			template := NewTemplate("", []byte(tt.content))
+			template := NewTemplate(&TemplateFile{}, []byte(tt.content))
 			result := template.fillTemplate(tt.values)
 			if result != tt.result {
 				t.Fatalf("We should get %#v, but got %#v", tt.result, result)

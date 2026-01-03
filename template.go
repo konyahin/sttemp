@@ -1,34 +1,60 @@
 package main
 
 import (
+	"log"
 	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
 )
 
+type TemplateFile struct {
+	Name     string
+	Filename string
+	Path     string
+}
+
+func NewTemplateFile(path string, baseDir string) *TemplateFile {
+	relPath, err := filepath.Rel(baseDir, path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	parent, name := filepath.Split(relPath)
+
+	filename := ""
+	if parent != "" {
+		filename = filepath.Clean(parent)
+	}
+
+	return &TemplateFile{
+		Name:     name,
+		Filename: filename,
+		Path:     path,
+	}
+}
+
+func (t TemplateFile) String() string {
+	if t.Filename == "" {
+		return t.Name
+	}
+	return t.Name + " - " + t.Filename
+}
+
 type Template struct {
-	Name      string
-	Filename  string
+	*TemplateFile
 	Content   []byte
 	Variables []string
 	Tokens    []Token
 }
 
-func NewTemplate(name string, content []byte) *Template {
+func NewTemplate(templateFile *TemplateFile, content []byte) *Template {
 	template := new(Template)
 
+	template.TemplateFile = templateFile
+
 	template.Content = content
-
-	parent, name := filepath.Split(name)
-	template.Name = name
-
-	if parent != "" {
-		template.Filename = filepath.Clean(parent)
-	}
-
 	template.Tokens = tokens(content)
-
 	template.Variables = findVariables(template.Tokens)
 
 	return template
@@ -51,13 +77,7 @@ func (t Template) fillTemplate(values map[string]string) string {
 }
 
 func (t Template) String() string {
-	var buf strings.Builder
-	buf.WriteString(t.Name)
-	if t.Filename != "" {
-		buf.WriteString(" - ")
-		buf.WriteString(t.Filename)
-	}
-	return buf.String()
+	return t.TemplateFile.String()
 }
 
 func findVariables(tokens []Token) []string {

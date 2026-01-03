@@ -34,13 +34,8 @@ func getBaseDir(baseDir string) (string, error) {
 	return templatesPath, nil
 }
 
-type TemplateFile struct {
-	Name    string
-	Content []byte
-}
-
-func findTemplates(baseDir string) ([]TemplateFile, error) {
-	var templates []TemplateFile
+func findTemplateFiles(baseDir string) ([]*TemplateFile, error) {
+	var templateFiles []*TemplateFile
 	err := filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -51,20 +46,7 @@ func findTemplates(baseDir string) ([]TemplateFile, error) {
 		}
 
 		if !d.IsDir() {
-			content, err := os.ReadFile(path)
-			if err != nil {
-				return nil
-			}
-
-			relPath, err := filepath.Rel(baseDir, path)
-			if err != nil {
-				return err
-			}
-
-			templates = append(templates, TemplateFile{
-				relPath,
-				content,
-			})
+			templateFiles = append(templateFiles, NewTemplateFile(path, baseDir))
 		}
 
 		return nil
@@ -74,7 +56,7 @@ func findTemplates(baseDir string) ([]TemplateFile, error) {
 		return nil, err
 	}
 
-	return templates, nil
+	return templateFiles, nil
 }
 
 func main() {
@@ -86,7 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	templates, err := findTemplates(baseDir)
+	templateFiles, err := findTemplateFiles(baseDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,22 +76,29 @@ func main() {
 	names := flag.Args()
 	if len(names) > 0 {
 		for _, name := range names {
-			for _, t := range templates {
-				template := NewTemplate(t.Name, t.Content)
+			for _, templateFile := range templateFiles {
+				if name != templateFile.Name {
+					continue
+				}
+
+				content, err := os.ReadFile(templateFile.Path)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				template := NewTemplate(templateFile, content)
 				values := make(map[string]string)
 				for _, variable := range template.Variables {
 					values[variable] = os.Getenv(variable)
 				}
-				if name == template.Name {
-					fmt.Println(template.fillTemplate(values))
-				}
+				fmt.Println(template.fillTemplate(values))
 			}
 		}
 		return
 	}
 
-	for _, t := range templates {
-		template := NewTemplate(t.Name, t.Content)
-		fmt.Println(template)
+	// if no args, print all template names
+	for _, templateFile := range templateFiles {
+		fmt.Println(templateFile)
 	}
 }
