@@ -28,7 +28,7 @@ func getBaseDir(baseDir string) (string, error) {
 
 	templatesPath, err := filepath.Abs(baseDir)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return templatesPath, nil
@@ -38,10 +38,13 @@ func findTemplateFiles(baseDir string) ([]*TemplateFile, error) {
 	var templateFiles []*TemplateFile
 	err := filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			if os.IsPermission(err) {
+				return nil
+			}
 			return err
 		}
 
-		if d.IsDir() && (strings.Contains(d.Name(), "/.") || strings.HasPrefix(d.Name(), ".")) {
+		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
 			return fs.SkipDir
 		}
 
