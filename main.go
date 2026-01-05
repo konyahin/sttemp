@@ -63,7 +63,9 @@ func findTemplateFiles(baseDir string) ([]*TemplateFile, error) {
 }
 
 func main() {
-	path := flag.String("C", "", "template's directory")
+	path := flag.String("C", "", "template's directory (by default is ~/"+defaultTemplateDir+")")
+	outputFileName := flag.String("o", "", "output file name")
+	defaultName := flag.Bool("d", false, "use default name for template")
 	flag.Parse()
 
 	baseDir, err := getBaseDir(*path)
@@ -78,6 +80,14 @@ func main() {
 
 	names := flag.Args()
 	if len(names) > 0 {
+		var file *os.File = os.Stdout
+		if !(*defaultName) && *outputFileName != "" {
+			file, err = os.Create(*outputFileName)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+		}
 		for _, name := range names {
 			for _, templateFile := range templateFiles {
 				if name != templateFile.Name {
@@ -94,7 +104,17 @@ func main() {
 				for _, variable := range template.Variables {
 					values[variable] = os.Getenv(variable)
 				}
-				fmt.Println(template.fillTemplate(values))
+				if *defaultName {
+					if template.Filename == "" {
+						log.Fatalf("Template %s has no default name, but -d flag was set", template.Name)
+					}
+					file, err = os.Create(template.Filename)
+					if err != nil {
+						log.Fatal(err)
+					}
+					defer file.Close()
+				}
+				fmt.Fprint(file, template.fillTemplate(values))
 			}
 		}
 		return
