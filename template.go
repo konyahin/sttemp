@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"maps"
 	"path/filepath"
 	"slices"
@@ -14,10 +13,10 @@ type TemplateFile struct {
 	Path     string
 }
 
-func NewTemplateFile(path string, baseDir string) *TemplateFile {
+func NewTemplateFile(path string, baseDir string) (*TemplateFile, error) {
 	relPath, err := filepath.Rel(baseDir, path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	parent, name := filepath.Split(relPath)
@@ -31,7 +30,7 @@ func NewTemplateFile(path string, baseDir string) *TemplateFile {
 		Name:     name,
 		Filename: filename,
 		Path:     path,
-	}
+	}, nil
 }
 
 func (t TemplateFile) String() string {

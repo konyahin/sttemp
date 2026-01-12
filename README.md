@@ -1,0 +1,56 @@
+# sttemp
+
+A simple CLI tool for processing text templates with variable substitution from environment variables or user input.
+
+Variables are resolved in the following order:
+1. Environment variables. If a variable exists in the environment, its value is used.
+2. Interactive prompt. If not found in environment, you'll be prompted to enter a value.
+
+## Installation
+You can build it from source, or use `go install`
+
+```sh
+go install github.com/konyahin/sttemp@latest
+```
+
+## Usage
+
+```sh
+sttemp [options] [template-name ...]
+```
+
+### Options
+- `-C <path>` - Custom template directory (default: `~/.local/share/sttemp`)
+- `-o <file>` - Output to file instead of stdout
+- `-d` - Use template's subdirectory name as output filename
+- `-h` - Show short help
+
+### Examples
+```sh
+sttemp                                  # list all templates
+sttemp greeting                         # process template `greeting`, output to stdout
+sttemp -o out.txt greeting              # save to file `out.txt`
+sttemp -d mit                           # save as `LICENSE`, if `mit` in `LICENSE` subfolder (see files structure below)
+export NAME="Alice" && sttemp greeting  # use environment variables
+```
+
+## Template Syntax
+
+Use `{VARIABLE}` for placeholders. Variables are resolved from environment or prompted interactively. To include literal `{VARIABLE}` text in your template without substitution, escape it with a backslash as this `\{VARIABLE}`.
+
+### Template example
+```
+Hello, {NAME}!
+Server: {HOST}:{PORT}
+Escape literals: \{NOT_A_VAR}
+```
+
+## Templates Organization
+Store templates in subdirectories for auto-naming with `-d`:
+```
+~/.local/share/sttemp/
+├── greeting
+└── LICENSE/
+    ├── mit   # `sttemp -d mit` creates file "LICENSE"
+    └── GPLv3 # `sttemp -d GPLv3` also creates file "LICENSE"
+```

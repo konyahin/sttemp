@@ -44,11 +44,11 @@ func getStoragePath(path string) (string, error) {
 		return filepath.Join(home, GetDefaultTemplateDir()), nil
 	}
 
-	path, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return "", err
 	}
-	return path, nil
+	return absPath, nil
 }
 
 func findTemplateFiles(path string) (map[string]TemplateFile, error) {
@@ -66,7 +66,10 @@ func findTemplateFiles(path string) (map[string]TemplateFile, error) {
 		}
 
 		if !d.IsDir() {
-			templateFile := NewTemplateFile(filePath, path)
+			templateFile, err := NewTemplateFile(filePath, path)
+			if err != nil {
+				return err
+			}
 			templateFiles[templateFile.Name] = *templateFile
 		}
 
