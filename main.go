@@ -9,6 +9,7 @@ func main() {
 	path := flag.String("C", "", "template's directory (by default is ~/"+GetDefaultTemplateDir()+")")
 	outputFileName := flag.String("o", "", "output file name")
 	defaultName := flag.Bool("d", false, "use default name for template")
+	noInput := flag.Bool("no-input", false, "use only environment variables")
 
 	flag.Parse()
 
@@ -22,6 +23,7 @@ func main() {
 		*defaultName,
 		flag.Args(),
 		storage,
+		*noInput,
 	}
 
 	if err := runState.Run(); err != nil {

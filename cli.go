@@ -12,6 +12,7 @@ type CliState struct {
 	defaultName    bool
 	templateNames  []string
 	storage        *Storage
+	noInput        bool
 }
 
 func (cs *CliState) Run() error {
@@ -41,7 +42,7 @@ func (cs *CliState) Run() error {
 			return err
 		}
 
-		values, err := getVariableValues(template)
+		values, err := getVariableValues(template, cs.noInput)
 		if err != nil {
 			return err
 		}

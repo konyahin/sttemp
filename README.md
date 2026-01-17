@@ -24,6 +24,7 @@ sttemp [options] [template-name ...]
 - `-o <file>` - Output to file instead of stdout
 - `-d` - Use template's subdirectory name as output filename
 - `-h` - Show short help
+- `--no-input` - Use only environment variables (do not ask user for substitution value); exit with error if some variable is missing
 
 ### Examples
 ```sh
