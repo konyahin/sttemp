@@ -13,13 +13,13 @@ type Storage struct {
 	templates map[string]TemplateFile
 }
 
-func NewStorage(path string) (*Storage, error) {
-	path, err := getStoragePath(path)
+func NewStorage(ioh *IOHandler, path string) (*Storage, error) {
+	path, err := getStoragePath(ioh, path)
 	if err != nil {
 		return nil, err
 	}
 
-	templateFiles, err := findTemplateFiles(path)
+	templateFiles, err := findTemplateFiles(ioh, path)
 	if err != nil {
 		return nil, err
 	}
@@ -35,9 +35,9 @@ func GetDefaultTemplateDir() string {
 	return ".local/share/sttemp"
 }
 
-func getStoragePath(path string) (string, error) {
+func getStoragePath(ioh *IOHandler, path string) (string, error) {
 	if path == "" {
-		home, err := os.UserHomeDir()
+		home, err := ioh.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
@@ -51,9 +51,9 @@ func getStoragePath(path string) (string, error) {
 	return absPath, nil
 }
 
-func findTemplateFiles(path string) (map[string]TemplateFile, error) {
+func findTemplateFiles(ioh *IOHandler, path string) (map[string]TemplateFile, error) {
 	templateFiles := make(map[string]TemplateFile)
-	err := filepath.WalkDir(path, func(filePath string, d fs.DirEntry, err error) error {
+	err := ioh.WalkDir(path, func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			if os.IsPermission(err) {
 				return nil

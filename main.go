@@ -13,7 +13,9 @@ func main() {
 
 	flag.Parse()
 
-	storage, err := NewStorage(*path)
+	ioh := DefaultIOHandler()
+
+	storage, err := NewStorage(ioh, *path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,6 +26,7 @@ func main() {
 		flag.Args(),
 		storage,
 		*noInput,
+		ioh,
 	}
 
 	if err := runState.Run(); err != nil {

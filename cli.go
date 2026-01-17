@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 )
 
 // CliState represents the state of the running app with all options set
@@ -13,6 +12,7 @@ type CliState struct {
 	templateNames  []string
 	storage        *Storage
 	noInput        bool
+	ioh            *IOHandler
 }
 
 func (cs *CliState) Run() error {
@@ -30,7 +30,7 @@ func (cs *CliState) Run() error {
 
 	for _, name := range cs.templateNames {
 		templateFile := cs.storage.templates[name]
-		content, err := os.ReadFile(templateFile.Path)
+		content, err := cs.ioh.ReadFile(templateFile.Path)
 		if err != nil {
 			return err
 		}
@@ -42,7 +42,7 @@ func (cs *CliState) Run() error {
 			return err
 		}
 
-		values, err := getVariableValues(template, cs.noInput)
+		values, err := cs.ioh.getVariableValues(template, cs.noInput)
 		if err != nil {
 			return err
 		}
@@ -75,12 +75,12 @@ func (cs *CliState) validateState() error {
 
 func (cs *CliState) getOutputFile(template *Template) (OutputFile, error) {
 	if cs.defaultName {
-		return os.Create(template.Filename)
+		return cs.ioh.create(template.Filename)
 	}
 
 	if cs.outputFileName != "" {
-		return os.Create(cs.outputFileName)
+		return cs.ioh.create(cs.outputFileName)
 	}
 
-	return StdoutInstance(), nil
+	return StdoutInstance(cs.ioh), nil
 }

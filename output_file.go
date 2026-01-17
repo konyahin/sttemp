@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"os"
 )
 
 type OutputFile interface {
@@ -10,18 +9,18 @@ type OutputFile interface {
 	io.Closer
 }
 
-type Stdout struct{}
+type Stdout struct {
+	ioh *IOHandler
+}
 
-var stdoutInstance = &Stdout{}
-
-func (*Stdout) Write(p []byte) (n int, err error) {
-	return os.Stdout.Write(p)
+func (s *Stdout) Write(p []byte) (n int, err error) {
+	return s.ioh.Write(p)
 }
 
 func (*Stdout) Close() error {
 	return nil
 }
 
-func StdoutInstance() OutputFile {
-	return stdoutInstance
+func StdoutInstance(ioh *IOHandler) OutputFile {
+	return &Stdout{ioh}
 }
