@@ -20,11 +20,11 @@ sttemp [options] [template-name ...]
 ```
 
 ### Options
-- `-C <path>` - Custom template directory (default: `~/.local/share/sttemp`)
-- `-o <file>` - Output to file instead of stdout
-- `-d` - Use template's subdirectory name as output filename
-- `-h` - Show short help
-- `--no-input` - Use only environment variables (do not ask user for substitution value); exit with error if some variable is missing
+- `-C <path>` custom template directory (default: `~/.local/share/sttemp`)
+- `-o <file>` output to file instead of stdout
+- `-d` use template's subdirectory name as output filename
+- `-h` show short help
+- `--no-input` use only environment variables (do not ask user for substitution value); exit with error if some variable is missing
 
 ### Examples
 ```sh
