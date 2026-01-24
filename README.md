@@ -25,6 +25,7 @@ sttemp [options] [template-name ...]
 - `-d` use template's subdirectory name as output filename
 - `-h` show short help
 - `--no-input` use only environment variables (do not ask user for substitution value); exit with error if some variable is missing
+- `--edit` edit selected template in your console `$EDITOR`
 
 ### Examples
 ```sh
@@ -32,6 +33,7 @@ sttemp                                  # list all templates
 sttemp greeting                         # process template `greeting`, output to stdout
 sttemp -o out.txt greeting              # save to file `out.txt`
 sttemp -d mit                           # save as `LICENSE`, if `mit` in `LICENSE` subfolder (see files structure below)
+sttemp --edit mit                       # open file with `mit` template in `$EDITOR`
 export NAME="Alice" && sttemp greeting  # use environment variables
 ```
 

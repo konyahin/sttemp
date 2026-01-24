@@ -5,7 +5,7 @@ import (
 )
 
 // CliState represents the state of the running app with all options set
-// and keep all business logic inside his functions
+// and keep all business logic inside its functions
 type CliState struct {
 	outputFileName string
 	defaultName    bool
@@ -13,11 +13,22 @@ type CliState struct {
 	storage        *Storage
 	noInput        bool
 	ioh            *IOHandler
+	editMode       bool
 }
 
 func (cs *CliState) Run() error {
 	if err := cs.validateState(); err != nil {
 		return err
+	}
+
+	if cs.editMode {
+		editor, ok := cs.ioh.LookupEnv("EDITOR")
+		if !ok {
+			editor = "vi"
+		}
+
+		templateFile := cs.storage.templates[cs.templateNames[0]]
+		return cs.ioh.executeCommand(editor, templateFile.Path)
 	}
 
 	// if no templates set, print all templates names
@@ -57,6 +68,14 @@ func (cs *CliState) Run() error {
 func (cs *CliState) validateState() error {
 	if cs.defaultName && cs.outputFileName != "" {
 		return fmt.Errorf("both -d and -o flags were set, but only one of them can be used at the same time")
+	}
+
+	if cs.editMode && len(cs.templateNames) == 0 {
+		return fmt.Errorf("edit mode was set, but no template name were provided")
+	}
+
+	if cs.editMode && len(cs.templateNames) != 1 {
+		return fmt.Errorf("edit mode was set, but too many template names were provided")
 	}
 
 	for _, name := range cs.templateNames {

@@ -10,6 +10,7 @@ func main() {
 	outputFileName := flag.String("o", "", "output file name")
 	defaultName := flag.Bool("d", false, "use default name for template")
 	noInput := flag.Bool("no-input", false, "use only environment variables")
+	editMode := flag.Bool("edit", false, "edit selected template in your console editor")
 
 	flag.Parse()
 
@@ -27,6 +28,7 @@ func main() {
 		storage,
 		*noInput,
 		ioh,
+		*editMode,
 	}
 
 	if err := runState.Run(); err != nil {

@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -17,6 +18,7 @@ type IOHandler struct {
 	ReadFile    func(name string) ([]byte, error)
 	UserHomeDir func() (string, error)
 	WalkDir     func(root string, fn fs.WalkDirFunc) error
+	Command     func(name string, arg ...string) *exec.Cmd
 }
 
 func DefaultIOHandler() *IOHandler {
@@ -27,6 +29,7 @@ func DefaultIOHandler() *IOHandler {
 		ReadFile:    os.ReadFile,
 		UserHomeDir: os.UserHomeDir,
 		WalkDir:     filepath.WalkDir,
+		Command:     exec.Command,
 	}
 }
 
@@ -63,4 +66,22 @@ func (ioh *IOHandler) getVariableValues(template *Template, noInput bool) (map[s
 
 func (ioh *IOHandler) create(name string) (OutputFile, error) {
 	return os.Create(name)
+}
+
+func (ioh *IOHandler) executeCommand(command string, arg string) error {
+	// command can be a single command or a command with arguments
+	// if it has arguments, split it and add to args
+	var args []string
+	if strings.Contains(command, " ") {
+		args = strings.Split(command, " ")
+		args = append(args, arg)
+	} else {
+		args = []string{command, arg}
+	}
+
+	cmd := ioh.Command(args[0], args[1:]...)
+	cmd.Stdin = ioh.Reader
+	cmd.Stdout = ioh.Writer
+	cmd.Stderr = ioh.Writer
+	return cmd.Run()
 }
