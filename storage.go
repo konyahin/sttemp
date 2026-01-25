@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -69,6 +70,9 @@ func findTemplateFiles(ioh *IOHandler, path string) (map[string]TemplateFile, er
 			templateFile, err := NewTemplateFile(filePath, path)
 			if err != nil {
 				return err
+			}
+			if old, ok := templateFiles[templateFile.Name]; ok {
+				return fmt.Errorf("two templates with same file name:\n\t%v\n\t%v", old.Path, templateFile.Path)
 			}
 			templateFiles[templateFile.Name] = *templateFile
 		}
