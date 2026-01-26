@@ -14,6 +14,7 @@ type CliState struct {
 	noInput        bool
 	ioh            *IOHandler
 	editMode       bool
+	listTemplates  bool
 }
 
 func (cs *CliState) Run() error {
@@ -31,10 +32,14 @@ func (cs *CliState) Run() error {
 		return cs.ioh.executeCommand(editor, templateFile.Path)
 	}
 
-	// if no templates set, print all templates names
-	if len(cs.templateNames) == 0 {
+	// if no templates specified or -l flag is set, list templates
+	if len(cs.templateNames) == 0 || cs.listTemplates {
 		for _, templateFile := range cs.storage.templates {
-			fmt.Println(templateFile)
+			if cs.listTemplates {
+				fmt.Println(templateFile.Name)
+			} else {
+				fmt.Println(templateFile)
+			}
 		}
 		return nil
 	}

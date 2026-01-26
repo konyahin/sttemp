@@ -11,6 +11,7 @@ func main() {
 	defaultName := flag.Bool("d", false, "use default name for template")
 	noInput := flag.Bool("no-input", false, "use only environment variables")
 	editMode := flag.Bool("edit", false, "edit selected template in your console editor")
+	listTemplates := flag.Bool("l", false, "list all templates")
 
 	flag.Parse()
 
@@ -29,6 +30,7 @@ func main() {
 		*noInput,
 		ioh,
 		*editMode,
+		*listTemplates,
 	}
 
 	if err := runState.Run(); err != nil {

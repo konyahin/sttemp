@@ -19,6 +19,32 @@ go install github.com/konyahin/sttemp@latest
 sttemp [options] [template-name ...]
 ```
 
+### Shell integration
+If you want to get autocomplete, copy appropriate line into your shell settings.
+
+```sh
+# zsh
+autoload -Uz compinit
+compinit
+compdef '_values "sttemp options" $(sttemp -l 2>/dev/null)' sttemp
+
+# bash
+complete -W "$(sttemp -l 2>/dev/null)" sttemp
+
+# ksh
+set -A complete_sttemp -- $(sttemp -l)
+```
+
+`fzf` integration can look like this
+
+```sh
+fst () {
+    templates="$(sttemp -l)"
+    selected=$(echo "$templates" | fzf)
+    [ -n "$selected" ] && sttemp "$selected"
+}
+```
+
 ### Options
 - `-C <path>` custom template directory (default: `~/.local/share/sttemp`)
 - `-o <file>` output to file instead of stdout
@@ -26,6 +52,7 @@ sttemp [options] [template-name ...]
 - `-h` show short help
 - `--no-input` use only environment variables (do not ask user for substitution value); exit with error if some variable is missing
 - `--edit` edit selected template in your console `$EDITOR`
+- `-l` list all templates names
 
 ### Examples
 ```sh
