@@ -10,13 +10,13 @@ import (
 
 type Dir struct {
 	// path to file/dir in file system
-	path  string
+	path string
 	// name of the file/dir
-	name  string
+	name string
 	// is it dir?
 	isDir bool
 	// error from the system when we try to access file
-	err   error
+	err error
 }
 
 func (d Dir) Name() string {
@@ -46,39 +46,39 @@ func TestStorageTemplateDir(t *testing.T) {
 		wantPath       string
 	}{
 		{
-			"when path is empty, use user home dir",
-			"",
-			nil,
-			nil,
-			"HOME_DIR/.local/share/sttemp",
+			name:           "when path is empty, use user home dir",
+			path:           "",
+			userHomeDirErr: nil,
+			wantError:      nil,
+			wantPath:       "HOME_DIR/.local/share/sttemp",
 		},
 		{
-			"when path is set, use it",
-			"/usr/local/sttemp",
-			nil,
-			nil,
-			"/usr/local/sttemp",
+			name:           "when path is set, use it",
+			path:           "/usr/local/sttemp",
+			userHomeDirErr: nil,
+			wantError:      nil,
+			wantPath:       "/usr/local/sttemp",
 		},
 		{
-			"when path is relative it should be turned into absolute path",
-			"/usr/local/../sttemp",
-			nil,
-			nil,
-			"/usr/sttemp",
+			name:           "when path is relative it should be turned into absolute path",
+			path:           "/usr/local/../sttemp",
+			userHomeDirErr: nil,
+			wantError:      nil,
+			wantPath:       "/usr/sttemp",
 		},
 		{
-			"if path is empty and UserHomeDir return error, we should got it",
-			"",
-			fs.ErrPermission,
-			fs.ErrPermission,
-			"",
+			name:           "if path is empty and UserHomeDir return error, we should got it",
+			path:           "",
+			userHomeDirErr: fs.ErrPermission,
+			wantError:      fs.ErrPermission,
+			wantPath:       "",
 		},
 		{
-			"if path is not empty UserHomeDir should not affect storage",
-			"/usr/local/sttemp",
-			fs.ErrPermission,
-			nil,
-			"/usr/local/sttemp",
+			name:           "if path is not empty UserHomeDir should not affect storage",
+			path:           "/usr/local/sttemp",
+			userHomeDirErr: fs.ErrPermission,
+			wantError:      nil,
+			wantPath:       "/usr/local/sttemp",
 		},
 	}
 
@@ -117,127 +117,127 @@ func TestStorageTemplates(t *testing.T) {
 		err    error
 	}{
 		{
-			"empty directory",
-			[]Dir{},
-			map[string]TemplateFile{},
-			nil,
+			name:   "empty directory",
+			walk:   []Dir{},
+			expect: map[string]TemplateFile{},
+			err:    nil,
 		},
 		{
-			"happy path",
-			[]Dir{
+			name: "happy path",
+			walk: []Dir{
 				{
-					"/templates/first",
-					"first",
-					false,
-					nil,
+					path:  "/templates/first",
+					name:  "first",
+					isDir: false,
+					err:   nil,
 				},
 				{
-					"/templates/LICENSE",
-					"LICENSE",
-					true,
-					nil,
+					path:  "/templates/LICENSE",
+					name:  "LICENSE",
+					isDir: true,
+					err:   nil,
 				},
 				{
-					"/templates/LICENSE/mit",
-					"mit",
-					false,
-					nil,
+					path:  "/templates/LICENSE/mit",
+					name:  "mit",
+					isDir: false,
+					err:   nil,
 				},
 				{
-					"/templates/LICENSE/gpl",
-					"gpl",
-					false,
-					nil,
+					path:  "/templates/LICENSE/gpl",
+					name:  "gpl",
+					isDir: false,
+					err:   nil,
 				},
 			},
-			map[string]TemplateFile{
+			expect: map[string]TemplateFile{
 				"first": {
-					"first",
-					"",
-					"/templates/first",
+					Name:        "first",
+					DefaultName: "",
+					Path:        "/templates/first",
 				},
 				"mit": {
-					"mit",
-					"LICENSE",
-					"/templates/LICENSE/mit",
+					Name:        "mit",
+					DefaultName: "LICENSE",
+					Path:        "/templates/LICENSE/mit",
 				},
 				"gpl": {
-					"gpl",
-					"LICENSE",
-					"/templates/LICENSE/gpl",
+					Name:        "gpl",
+					DefaultName: "LICENSE",
+					Path:        "/templates/LICENSE/gpl",
 				},
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"skip hidden dir",
-			[]Dir{
+			name: "skip hidden dir",
+			walk: []Dir{
 				{
-					"/templates/.config",
-					".config",
-					true,
-					nil,
+					path:  "/templates/.config",
+					name:  ".config",
+					isDir: true,
+					err:   nil,
 				},
 			},
-			nil,
-			fs.SkipDir,
+			expect: nil,
+			err:    fs.SkipDir,
 		},
 		{
-			"return fs errors as is (except permissions errors)",
-			[]Dir{
+			name: "return fs errors as is (except permissions errors)",
+			walk: []Dir{
 				{
-					"/templates/first",
-					"first",
-					false,
-					fs.ErrInvalid,
+					path:  "/templates/first",
+					name:  "first",
+					isDir: false,
+					err:   fs.ErrInvalid,
 				},
 			},
-			nil,
-			fs.ErrInvalid,
+			expect: nil,
+			err:    fs.ErrInvalid,
 		},
 		{
-			"ignore permissions errors",
-			[]Dir{
+			name: "ignore permissions errors",
+			walk: []Dir{
 				{
-					"/templates/first",
-					"first",
-					false,
-					nil,
+					path:  "/templates/first",
+					name:  "first",
+					isDir: false,
+					err:   nil,
 				},
 				{
-					"/templates/second",
-					"second",
-					false,
-					os.ErrPermission,
+					path:  "/templates/second",
+					name:  "second",
+					isDir: false,
+					err:   os.ErrPermission,
 				},
 			},
-			map[string]TemplateFile{
+			expect: map[string]TemplateFile{
 				"first": {
-					"first",
-					"",
-					"/templates/first",
+					Name:        "first",
+					DefaultName: "",
+					Path:        "/templates/first",
 				},
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"two templates with the same name",
-			[]Dir{
+			name: "two templates with the same name",
+			walk: []Dir{
 				{
-					"/templates/first",
-					"first",
-					false,
-					nil,
+					path:  "/templates/first",
+					name:  "first",
+					isDir: false,
+					err:   nil,
 				},
 				{
-					"/templates/subdir/first",
-					"first",
-					false,
-					nil,
+					path:  "/templates/subdir/first",
+					name:  "first",
+					isDir: false,
+					err:   nil,
 				},
 			},
-			nil,
-			ErrDuplicateTemplate,
+			expect: nil,
+			err:    ErrDuplicateTemplate,
 		},
 	}
 
