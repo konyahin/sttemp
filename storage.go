@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+var ErrDuplicateTemplate = errors.New("duplicate template names")
 
 // Storage represent a directory with all templates
 type Storage struct {
@@ -72,7 +75,7 @@ func findTemplateFiles(ioh *IOHandler, path string) (map[string]TemplateFile, er
 				return err
 			}
 			if old, ok := templateFiles[templateFile.Name]; ok {
-				return fmt.Errorf("two templates with same file name:\n\t%v\n\t%v", old.Path, templateFile.Path)
+				return fmt.Errorf("%w: %s and %s", ErrDuplicateTemplate, old.Path, templateFile.Path)
 			}
 			templateFiles[templateFile.Name] = *templateFile
 		}

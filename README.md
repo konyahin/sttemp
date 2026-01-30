@@ -70,7 +70,7 @@ Use `{VARIABLE}` for placeholders. Variables are resolved from environment or pr
 
 ### Template example
 ```
-Hello, {NAME}!
+Hello, {FIRST NAME}!
 Server: {HOST}:{PORT}
 Escape literals: \{NOT_A_VAR}
 ```

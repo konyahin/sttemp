@@ -8,9 +8,12 @@ import (
 )
 
 type TemplateFile struct {
-	Name     string
-	Filename string
-	Path     string
+	// name of physical file
+	Name string
+	// default name for template
+	DefaultName string
+	// path to the file
+	Path string
 }
 
 func NewTemplateFile(path string, baseDir string) (*TemplateFile, error) {
@@ -27,17 +30,17 @@ func NewTemplateFile(path string, baseDir string) (*TemplateFile, error) {
 	}
 
 	return &TemplateFile{
-		Name:     name,
-		Filename: filename,
-		Path:     path,
+		Name:        name,
+		DefaultName: filename,
+		Path:        path,
 	}, nil
 }
 
 func (t TemplateFile) String() string {
-	if t.Filename == "" {
+	if t.DefaultName == "" {
 		return t.Name
 	}
-	return t.Name + " - " + t.Filename
+	return t.Name + " - " + t.DefaultName
 }
 
 type Template struct {

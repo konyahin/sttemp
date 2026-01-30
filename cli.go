@@ -89,7 +89,7 @@ func (cs *CliState) validateState() error {
 			return fmt.Errorf("template %s not found", name)
 		}
 
-		if cs.defaultName && templateFile.Filename == "" {
+		if cs.defaultName && templateFile.DefaultName == "" {
 			return fmt.Errorf("template %s has no default name, but -d flag was set", templateFile.Name)
 		}
 	}
@@ -99,7 +99,7 @@ func (cs *CliState) validateState() error {
 
 func (cs *CliState) getOutputFile(template *Template) (OutputFile, error) {
 	if cs.defaultName {
-		return cs.ioh.create(template.Filename)
+		return cs.ioh.create(template.DefaultName)
 	}
 
 	if cs.outputFileName != "" {
