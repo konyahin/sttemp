@@ -1,9 +1,26 @@
 package main
 
 import (
-	"os/exec"
+	"errors"
 	"testing"
 )
+
+type MockCommandRunner struct {
+	ShouldFail   bool
+	CapturedName string
+	CapturedArgs []string
+}
+
+func (m *MockCommandRunner) Run(ioh *IOHandler, name string, args ...string) error {
+	m.CapturedName = name
+	m.CapturedArgs = args
+
+	if m.ShouldFail {
+		return errors.New("simulated error")
+	}
+
+	return nil
+}
 
 func TestCliValidation(t *testing.T) {
 	testCases := []struct {
@@ -89,120 +106,88 @@ func TestCliValidation(t *testing.T) {
 }
 
 func TestEditMode(t *testing.T) {
-	t.Run("edit mode should use EDITOR environment variable", func(t *testing.T) {
-		var commandName string
-		var commandArgs []string
-		ioh := &IOHandler{
-			LookupEnv: func(key string) (string, bool) {
-				if key == "EDITOR" {
-					return "emacs", true
-				}
-				return "", false
-			},
-			Command: func(name string, arg ...string) *exec.Cmd {
-				commandName = name
-				commandArgs = arg
-				return &exec.Cmd{
-					Path: "/usr/bin/true",
-				}
-			},
-		}
-		cliState := CliState{
-			templateNames: []string{"for-edit"},
-			storage: &Storage{templates: map[string]TemplateFile{
-				"for-edit": {
-					Name:        "for-edit",
-					DefaultName: "",
-					Path:        "/path/to/template/for-edit",
+	testCases := []struct {
+		name        string
+		editorVar   string
+		shouldFail  bool
+		expectedCmd string
+		expectedArg string
+		expectError bool
+	}{
+		{
+			name:        "edit mode should use EDITOR environment variable",
+			editorVar:   "emacs",
+			expectedCmd: "emacs",
+			expectedArg: "/path/to/template/for-edit",
+		},
+		{
+			name:        "edit mode should use vi, if EDITOR environment variable is missing",
+			editorVar:   "",
+			expectedCmd: "vi",
+			expectedArg: "/path/to/template/for-edit",
+		},
+		{
+			name:        "edit mode should return errors, if something goes wrong",
+			editorVar:   "",
+			shouldFail:  true,
+			expectedCmd: "vi",
+			expectedArg: "/path/to/template/for-edit",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRunner := &MockCommandRunner{
+				ShouldFail: tt.shouldFail,
+			}
+
+			ioh := &IOHandler{
+				LookupEnv: func(key string) (string, bool) {
+					if key == "EDITOR" && tt.editorVar != "" {
+						return tt.editorVar, true
+					}
+					return "", false
 				},
-			}},
-			ioh:      ioh,
-			editMode: true,
-		}
+				CommandRunner: mockRunner,
+			}
+			cliState := CliState{
+				templateNames: []string{"for-edit"},
+				storage: &Storage{templates: map[string]TemplateFile{
+					"for-edit": {
+						Name:        "for-edit",
+						DefaultName: "",
+						Path:        "/path/to/template/for-edit",
+					},
+				}},
+				ioh:      ioh,
+				editMode: true,
+			}
 
-		err := cliState.Run()
-		if err != nil {
-			t.Fatalf("edit mode should not return errors, but we got %v", err)
-		}
+			err := cliState.Run()
 
-		if commandName != "emacs" {
-			t.Fatalf("edit mode should use EDITOR var, but we got %v", commandName)
-		}
-
-		if len(commandArgs) != 1 || commandArgs[0] != "/path/to/template/for-edit" {
-			t.Fatalf("edit mode should use template path as editor argument, but we got %v", commandArgs)
-		}
-	})
-
-	t.Run("edit mode should use vi, if EDITOR environment variable is missing", func(t *testing.T) {
-		var commandName string
-		var commandArgs []string
-		ioh := &IOHandler{
-			LookupEnv: func(key string) (string, bool) {
-				return "", false
-			},
-			Command: func(name string, arg ...string) *exec.Cmd {
-				commandName = name
-				commandArgs = arg
-				return &exec.Cmd{
-					Path: "/usr/bin/true",
+			if tt.expectError {
+				if err == nil {
+					t.Fatalf("expected error, but got nil")
 				}
-			},
-		}
-		cliState := CliState{
-			templateNames: []string{"for-edit"},
-			storage: &Storage{templates: map[string]TemplateFile{
-				"for-edit": {
-					Name:        "for-edit",
-					DefaultName: "",
-					Path:        "/path/to/template/for-edit",
-				},
-			}},
-			ioh:      ioh,
-			editMode: true,
-		}
+				return
+			}
 
-		err := cliState.Run()
-		if err != nil {
-			t.Fatalf("edit mode should not return errors, but we got %v", err)
-		}
+			if err != nil {
+				t.Fatalf("expected no error, but got: %v", err)
+			}
 
-		if commandName != "vi" {
-			t.Fatalf("edit mode should use vi, but we got %v", commandName)
-		}
+			if mockRunner.CapturedName != tt.expectedCmd {
+				t.Fatalf("expected command %q, but got %q", tt.expectedCmd, mockRunner.CapturedName)
+			}
 
-		if len(commandArgs) != 1 || commandArgs[0] != "/path/to/template/for-edit" {
-			t.Fatalf("edit mode should use template path as editor argument, but we got %v", commandArgs)
-		}
-	})
+			if len(mockRunner.CapturedArgs) != 1 {
+				t.Fatalf("expected 1 argument, but got %d", len(mockRunner.CapturedArgs))
+			}
 
-	t.Run("edit mode should return errors, if something goes wrong", func(t *testing.T) {
-		ioh := &IOHandler{
-			LookupEnv: func(key string) (string, bool) {
-				return "", false
-			},
-			Command: func(name string, arg ...string) *exec.Cmd {
-				return &exec.Cmd{
-					Path: "/usr/bin/false",
-				}
-			},
-		}
-		cliState := CliState{
-			templateNames: []string{"for-edit"},
-			storage: &Storage{templates: map[string]TemplateFile{
-				"for-edit": {
-					Name:        "for-edit",
-					DefaultName: "",
-					Path:        "/path/to/template/for-edit",
-				},
-			}},
-			ioh:      ioh,
-			editMode: true,
-		}
-
-		err := cliState.Run()
-		if err == nil || err.Error() != "exit status 1" {
-			t.Fatalf("edit mode should return error , but we got %v", err)
-		}
-	})
+			if mockRunner.CapturedArgs[0] != tt.expectedArg {
+				t.Fatalf("expected argument %q, but got %q", tt.expectedArg, mockRunner.CapturedArgs[0])
+			}
+		})
+	}
 }

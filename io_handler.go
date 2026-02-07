@@ -11,25 +11,39 @@ import (
 	"strings"
 )
 
+type CommandRunner interface {
+	Run(ioh *IOHandler, name string, args ...string) error
+}
+
+type RealCommandRunner struct{}
+
+func (r *RealCommandRunner) Run(ioh *IOHandler, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Stdin = ioh.Reader
+	cmd.Stdout = ioh.Writer
+	cmd.Stderr = ioh.Writer
+	return cmd.Run()
+}
+
 type IOHandler struct {
 	io.Reader
 	io.Writer
-	LookupEnv   func(key string) (string, bool)
-	ReadFile    func(name string) ([]byte, error)
-	UserHomeDir func() (string, error)
-	WalkDir     func(root string, fn fs.WalkDirFunc) error
-	Command     func(name string, arg ...string) *exec.Cmd
+	LookupEnv     func(key string) (string, bool)
+	ReadFile      func(name string) ([]byte, error)
+	UserHomeDir   func() (string, error)
+	WalkDir       func(root string, fn fs.WalkDirFunc) error
+	CommandRunner CommandRunner
 }
 
 func DefaultIOHandler() *IOHandler {
 	return &IOHandler{
-		Reader:      os.Stdin,
-		Writer:      os.Stdout,
-		LookupEnv:   os.LookupEnv,
-		ReadFile:    os.ReadFile,
-		UserHomeDir: os.UserHomeDir,
-		WalkDir:     filepath.WalkDir,
-		Command:     exec.Command,
+		Reader:        os.Stdin,
+		Writer:        os.Stdout,
+		LookupEnv:     os.LookupEnv,
+		ReadFile:      os.ReadFile,
+		UserHomeDir:   os.UserHomeDir,
+		WalkDir:       filepath.WalkDir,
+		CommandRunner: &RealCommandRunner{},
 	}
 }
 
@@ -79,9 +93,5 @@ func (ioh *IOHandler) executeCommand(command string, arg string) error {
 		args = []string{command, arg}
 	}
 
-	cmd := ioh.Command(args[0], args[1:]...)
-	cmd.Stdin = ioh.Reader
-	cmd.Stdout = ioh.Writer
-	cmd.Stderr = ioh.Writer
-	return cmd.Run()
+	return ioh.CommandRunner.Run(ioh, args[0], args[1:]...)
 }
