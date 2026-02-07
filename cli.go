@@ -76,7 +76,7 @@ func (cs *CliState) validateState() error {
 	}
 
 	if cs.editMode && len(cs.templateNames) == 0 {
-		return fmt.Errorf("edit mode was set, but no template name were provided")
+		return fmt.Errorf("edit mode was set, but no template name was provided")
 	}
 
 	if cs.editMode && len(cs.templateNames) != 1 {
