@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"maps"
+	"slices"
+	"strings"
 )
 
 // CliState represents the state of the running app with all options set
@@ -34,11 +37,15 @@ func (cs *CliState) Run() error {
 
 	// if no templates specified or -l flag is set, list templates
 	if len(cs.templateNames) == 0 || cs.listTemplates {
-		for _, templateFile := range cs.storage.templates {
+		templates := slices.Collect(maps.Values(cs.storage.templates))
+		slices.SortFunc(templates, func(a, b TemplateFile) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		for _, templateFile := range templates {
 			if cs.listTemplates {
-				fmt.Println(templateFile.Name)
+				fmt.Fprintln(cs.ioh.Writer, templateFile.Name)
 			} else {
-				fmt.Println(templateFile)
+				fmt.Fprintln(cs.ioh.Writer, templateFile)
 			}
 		}
 		return nil
@@ -64,7 +71,9 @@ func (cs *CliState) Run() error {
 		}
 
 		fmt.Fprint(file, template.fillTemplate(values))
-		file.Close()
+		if err := file.Close(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -99,12 +108,12 @@ func (cs *CliState) validateState() error {
 
 func (cs *CliState) getOutputFile(template *Template) (OutputFile, error) {
 	if cs.defaultName {
-		return cs.ioh.create(template.DefaultName)
+		return cs.ioh.Create(template.DefaultName)
 	}
 
 	if cs.outputFileName != "" {
-		return cs.ioh.create(cs.outputFileName)
+		return cs.ioh.Create(cs.outputFileName)
 	}
 
-	return StdoutInstance(cs.ioh), nil
+	return StdoutInstance(cs.ioh.Writer), nil
 }

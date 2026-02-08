@@ -10,17 +10,17 @@ type OutputFile interface {
 }
 
 type Stdout struct {
-	ioh *IOHandler
+	writer io.Writer
 }
 
 func (s *Stdout) Write(p []byte) (n int, err error) {
-	return s.ioh.Write(p)
+	return s.writer.Write(p)
 }
 
 func (*Stdout) Close() error {
 	return nil
 }
 
-func StdoutInstance(ioh *IOHandler) OutputFile {
-	return &Stdout{ioh}
+func StdoutInstance(writer io.Writer) OutputFile {
+	return &Stdout{writer}
 }

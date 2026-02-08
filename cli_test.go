@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"maps"
+	"slices"
 	"testing"
 )
 
@@ -187,6 +190,231 @@ func TestEditMode(t *testing.T) {
 
 			if mockRunner.CapturedArgs[0] != tt.expectedArg {
 				t.Fatalf("expected argument %q, but got %q", tt.expectedArg, mockRunner.CapturedArgs[0])
+			}
+		})
+	}
+}
+
+func TestListTemplates(t *testing.T) {
+	var writer bytes.Buffer
+	ioh := &IOHandler{
+		Writer: &writer,
+	}
+
+	testCases := []struct {
+		name          string
+		storage       map[string]TemplateFile
+		expect        string
+		listTemplates bool
+	}{
+		{
+			name: "happy path",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "",
+					Path:        "/path/to/template/first",
+				},
+				"second": {
+					Name:        "second",
+					DefaultName: "parent",
+					Path:        "/path/to/template/parent/second",
+				},
+			},
+			expect: "first\nsecond - parent\n",
+		},
+		{
+			name:    "empty storage",
+			storage: map[string]TemplateFile{},
+			expect:  "",
+		},
+		{
+			name: "list templates - happy path",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "",
+					Path:        "/path/to/template/first",
+				},
+				"second": {
+					Name:        "second",
+					DefaultName: "parent",
+					Path:        "/path/to/template/parent/second",
+				},
+			},
+			expect:        "first\nsecond\n",
+			listTemplates: true,
+		},
+		{
+			name:          "list templates - empty storage",
+			storage:       map[string]TemplateFile{},
+			expect:        "",
+			listTemplates: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			defer writer.Reset()
+			cliState := CliState{
+				storage:       &Storage{templates: tt.storage},
+				ioh:           ioh,
+				listTemplates: tt.listTemplates,
+			}
+
+			err := cliState.Run()
+
+			if err != nil {
+				t.Fatalf("expected no error, but got: %v", err)
+			}
+
+			result := writer.String()
+			if result != tt.expect {
+				t.Fatalf("wrong output format, expected:\n%v\nbut got:\n%v\n", tt.expect, result)
+			}
+		})
+	}
+}
+
+func TestTemplateOutput(t *testing.T) {
+	var writer bytes.Buffer
+	ioh := &IOHandler{
+		Writer: &writer,
+		LookupEnv: func(key string) (string, bool) {
+			return key, true
+		},
+		ReadFile: func(name string) ([]byte, error) {
+			return []byte(name + ": {VAR}\n"), nil
+		},
+		Create: func(name string) (OutputFile, error) {
+			writer.Write([]byte(name))
+			writer.Write([]byte("\n\n"))
+			return StdoutInstance(&writer), nil
+		},
+	}
+
+	testCases := []struct {
+		name           string
+		storage        map[string]TemplateFile
+		outputFileName string
+		defaultName    bool
+		expect         string
+	}{
+		{
+			name: "happy path",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "",
+					Path:        "/path/to/template/first",
+				},
+			},
+			expect: "/path/to/template/first: VAR\n",
+		},
+		{
+			name: "template with default name but -d not set",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "default",
+					Path:        "/path/to/template/first",
+				},
+			},
+			expect: "/path/to/template/first: VAR\n",
+		},
+		{
+			name: "output into file",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "",
+					Path:        "/path/to/template/first",
+				},
+			},
+			outputFileName: "second",
+			expect:         "second\n\n/path/to/template/first: VAR\n",
+		},
+		{
+			name: "output into file template with default name but -d not set",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "default",
+					Path:        "/path/to/template/first",
+				},
+			},
+			outputFileName: "second",
+			expect:         "second\n\n/path/to/template/first: VAR\n",
+		},
+		{
+			name: "output into file with default name",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "default",
+					Path:        "/path/to/template/first",
+				},
+			},
+			defaultName: true,
+			expect:      "default\n\n/path/to/template/first: VAR\n",
+		},
+		{
+			name: "a few templates",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "default",
+					Path:        "/path/to/template/first",
+				},
+				"second": {
+					Name:        "second",
+					DefaultName: "",
+					Path:        "/path/to/template/second",
+				},
+			},
+			expect: "/path/to/template/first: VAR\n/path/to/template/second: VAR\n",
+		},
+		{
+			name: "a few templates with output into file",
+			storage: map[string]TemplateFile{
+				"first": {
+					Name:        "first",
+					DefaultName: "default",
+					Path:        "/path/to/template/first",
+				},
+				"second": {
+					Name:        "second",
+					DefaultName: "",
+					Path:        "/path/to/template/second",
+				},
+			},
+			outputFileName: "output",
+			expect:         "output\n\n/path/to/template/first: VAR\noutput\n\n/path/to/template/second: VAR\n",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			defer writer.Reset()
+			names := slices.Collect(maps.Keys(tt.storage))
+			slices.Sort(names)
+			cliState := CliState{
+				templateNames:  names,
+				storage:        &Storage{templates: tt.storage},
+				ioh:            ioh,
+				outputFileName: tt.outputFileName,
+				defaultName:    tt.defaultName,
+			}
+
+			err := cliState.Run()
+
+			if err != nil {
+				t.Fatalf("expected no error, but got: %v", err)
+			}
+
+			result := writer.String()
+			if result != tt.expect {
+				t.Fatalf("wrong output format, expected:\n%v\nbut got:\n%v\n", tt.expect, result)
 			}
 		})
 	}

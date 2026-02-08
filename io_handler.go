@@ -32,17 +32,22 @@ type IOHandler struct {
 	ReadFile      func(name string) ([]byte, error)
 	UserHomeDir   func() (string, error)
 	WalkDir       func(root string, fn fs.WalkDirFunc) error
+	Create        func(name string) (OutputFile, error)
 	CommandRunner CommandRunner
 }
 
 func DefaultIOHandler() *IOHandler {
 	return &IOHandler{
-		Reader:        os.Stdin,
-		Writer:        os.Stdout,
-		LookupEnv:     os.LookupEnv,
-		ReadFile:      os.ReadFile,
-		UserHomeDir:   os.UserHomeDir,
-		WalkDir:       filepath.WalkDir,
+		Reader:      os.Stdin,
+		Writer:      os.Stdout,
+		LookupEnv:   os.LookupEnv,
+		ReadFile:    os.ReadFile,
+		UserHomeDir: os.UserHomeDir,
+		WalkDir:     filepath.WalkDir,
+		Create: func(name string) (OutputFile, error) {
+			file, err := os.Create(name)
+			return OutputFile(file), err
+		},
 		CommandRunner: &RealCommandRunner{},
 	}
 }
@@ -76,10 +81,6 @@ func (ioh *IOHandler) getVariableValues(template *Template, noInput bool) (map[s
 		values[variable] = envValue
 	}
 	return values, nil
-}
-
-func (ioh *IOHandler) create(name string) (OutputFile, error) {
-	return os.Create(name)
 }
 
 func (ioh *IOHandler) executeCommand(command string, arg string) error {
