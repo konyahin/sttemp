@@ -198,7 +198,7 @@ func TestEditMode(t *testing.T) {
 func TestListTemplates(t *testing.T) {
 	var writer bytes.Buffer
 	ioh := &IOHandler{
-		Writer: &writer,
+		Stdout: &writer,
 	}
 
 	testCases := []struct {
@@ -279,7 +279,7 @@ func TestListTemplates(t *testing.T) {
 func TestTemplateOutput(t *testing.T) {
 	var writer bytes.Buffer
 	ioh := &IOHandler{
-		Writer: &writer,
+		Stdout: &writer,
 		LookupEnv: func(key string) (string, bool) {
 			return key, true
 		},

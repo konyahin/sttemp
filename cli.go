@@ -43,9 +43,9 @@ func (cs *CliState) Run() error {
 		})
 		for _, templateFile := range templates {
 			if cs.listTemplates {
-				fmt.Fprintln(cs.ioh.Writer, templateFile.Name)
+				fmt.Fprintln(cs.ioh.Stdout, templateFile.Name)
 			} else {
-				fmt.Fprintln(cs.ioh.Writer, templateFile)
+				fmt.Fprintln(cs.ioh.Stdout, templateFile)
 			}
 		}
 		return nil
@@ -115,5 +115,5 @@ func (cs *CliState) getOutputFile(template *Template) (OutputFile, error) {
 		return cs.ioh.Create(cs.outputFileName)
 	}
 
-	return StdoutInstance(cs.ioh.Writer), nil
+	return StdoutInstance(cs.ioh.Stdout), nil
 }

@@ -19,15 +19,16 @@ type RealCommandRunner struct{}
 
 func (r *RealCommandRunner) Run(ioh *IOHandler, name string, args ...string) error {
 	cmd := exec.Command(name, args...)
-	cmd.Stdin = ioh.Reader
-	cmd.Stdout = ioh.Writer
-	cmd.Stderr = ioh.Writer
+	cmd.Stdin = ioh.Stdin
+	cmd.Stdout = ioh.Stdout
+	cmd.Stderr = ioh.Stderr
 	return cmd.Run()
 }
 
 type IOHandler struct {
-	io.Reader
-	io.Writer
+	Stdin         io.Reader
+	Stdout        io.Writer
+	Stderr        io.Writer
 	LookupEnv     func(key string) (string, bool)
 	ReadFile      func(name string) ([]byte, error)
 	UserHomeDir   func() (string, error)
@@ -38,8 +39,9 @@ type IOHandler struct {
 
 func DefaultIOHandler() *IOHandler {
 	return &IOHandler{
-		Reader:      os.Stdin,
-		Writer:      os.Stdout,
+		Stdin:       os.Stdin,
+		Stdout:      os.Stdout,
+		Stderr:      os.Stderr,
 		LookupEnv:   os.LookupEnv,
 		ReadFile:    os.ReadFile,
 		UserHomeDir: os.UserHomeDir,
@@ -53,8 +55,8 @@ func DefaultIOHandler() *IOHandler {
 }
 
 func (ioh *IOHandler) askForValue(variable string) (string, error) {
-	reader := bufio.NewReader(ioh)
-	fmt.Fprintf(ioh, "Enter value for %s: ", variable)
+	reader := bufio.NewReader(ioh.Stdin)
+	fmt.Fprintf(ioh.Stderr, "Enter value for %s: ", variable)
 
 	input, err := reader.ReadString('\n')
 	if err != nil {
